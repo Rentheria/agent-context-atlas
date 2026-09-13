@@ -1,0 +1,63 @@
+{
+  "name": "agent-context-atlas",
+  "version": "0.1.0",
+  "description": "Wiki + typed doc graph + hybrid RAG for agent/machine context. Never invents measured numbers (falta el dato). Synthetic fixtures only.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "atlas": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "fixtures",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "atlas": "tsx src/cli.ts",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "rag",
+    "embeddings",
+    "agent-context",
+    "doc-graph",
+    "markdown",
+    "cli"
+  ],
+  "author": "Alejandro Rentheria (Rentheria)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rentheria/agent-context-atlas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Rentheria/agent-context-atlas/issues"
+  },
+  "homepage": "https://github.com/Rentheria/agent-context-atlas#readme",
+  "dependencies": {
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
