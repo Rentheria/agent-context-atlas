@@ -133,7 +133,15 @@ export function answerFromEvidence(question: string, evidence: string): string {
     const mustHave = required.length > 0 ? required : [...focus];
     if (mustHave.length === 0) return FALTA_EL_DATO;
 
-    const candidates = lines.filter(
+    const askedEntities = entityIdsIn(question);
+    const sections = groupSections(trimmedEvidence);
+    const scoped =
+      askedEntities.length === 0
+        ? lines
+        : sections
+            .filter((section) => askedEntities.every((id) => section.toLowerCase().includes(id)))
+            .flatMap((section) => splitLines(section));
+    const candidates = scoped.filter(
       (line) => hasMeasuredNumber(line) && lineHasTerms(line, mustHave),
     );
     const numbered = pickBestLine(qTokens, candidates);
@@ -169,6 +177,22 @@ export function tokenize(text: string): Set<string> {
     .split(/[^\p{L}\p{N}_]+/u)
     .filter((token) => token.length > 1 && !STOPWORDS.has(token));
   return new Set(tokens);
+}
+
+/** Hyphenated ids such as host-demo-01 or bot-alpha. */
+const ENTITY_ID_RE = /\b[a-z][a-z0-9]*(?:-[a-z0-9]+)+\b/gi;
+
+export function entityIdsIn(text: string): string[] {
+  return [...new Set((text.toLowerCase().match(ENTITY_ID_RE) ?? []).map((id) => id.toLowerCase()))];
+}
+
+function groupSections(evidence: string): string[] {
+  const parts = evidence
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : [evidence];
 }
 
 function measurementFocus(question: Set<string>): Set<string> {

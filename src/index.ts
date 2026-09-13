@@ -25,5 +25,5 @@ export {
 export type { EmbeddingsClient, EmbeddingsConfig } from "./embeddings.js";
 export { ingest } from "./ingest.js";
 export { query, cosineSimilarity } from "./query.js";
-export { answerFromEvidence, hasMeasurementIntent } from "./answer.js";
+export { answerFromEvidence, entityIdsIn, hasMeasurementIntent } from "./answer.js";
 export { loadIndex } from "./store.js";

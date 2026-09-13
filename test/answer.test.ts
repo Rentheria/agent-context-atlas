@@ -27,4 +27,16 @@ describe("falta el dato rule", () => {
   it("never keeps a number that is not in the evidence", () => {
     expect(answerFromEvidence("RAM_GB de host-demo-01", "host-demo-01 sin cifras")).toBe(FALTA_EL_DATO);
   });
+
+  it("does not assign another fiche's metric to the asked entity", () => {
+    const mixed = [
+      "host-demo-01",
+      "RAM_GB: 4",
+      "",
+      "bot-alpha",
+      "max_context_tokens: 8192",
+    ].join("\n");
+    expect(answerFromEvidence("RAM_GB de bot-alpha", mixed)).toBe(FALTA_EL_DATO);
+    expect(answerFromEvidence("RAM_GB de host-demo-01", mixed)).toMatch(/RAM_GB: 4/);
+  });
 });

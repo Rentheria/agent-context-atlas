@@ -139,6 +139,13 @@ Nueva nota sintética: org-example-revision.
         embeddings,
       });
       expect(gpu.answer).toBe(FALTA_EL_DATO);
+
+      const wrongEntity = await query({
+        question: "RAM_GB de bot-alpha",
+        indexDir: dir,
+        embeddings,
+      });
+      expect(wrongEntity.answer).toBe(FALTA_EL_DATO);
     });
   });
 });

@@ -13,6 +13,14 @@ describe("chunkMarkdown", () => {
     expect(chunks.every((chunk) => chunk.content_hash.length === 64)).toBe(true);
   });
 
+  it("rejects overlap that cannot progress", () => {
+    const long = `${"word ".repeat(80)}end`;
+    expect(() => chunkMarkdown("bot-alpha", long, { maxChars: 40, overlap: 40 })).toThrow(
+      /overlap/,
+    );
+    expect(() => chunkMarkdown("bot-alpha", long, { maxChars: 0, overlap: 0 })).toThrow(/maxChars/);
+  });
+
   it("wraps long sections", () => {
     const long = `${"word ".repeat(400)}end`;
     const chunks = chunkMarkdown("bot-alpha", long, { maxChars: 80, overlap: 10 });

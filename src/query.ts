@@ -2,7 +2,7 @@ import type { EmbeddingsClient } from "./embeddings.js";
 import { expandNeighbors } from "./graph.js";
 import { FALTA_EL_DATO, type IndexedChunk, type QueryHit, type QueryResult } from "./types.js";
 import { loadIndex } from "./store.js";
-import { answerFromEvidence, isMetricToken, tokenize } from "./answer.js";
+import { answerFromEvidence, entityIdsIn, isMetricToken, tokenize } from "./answer.js";
 
 export interface QueryOptions {
   question: string;
@@ -50,7 +50,19 @@ export async function query(options: QueryOptions): Promise<QueryResult> {
   ).slice(0, topK);
 
   const sources = dedupeHits([...ranked.slice(0, topK), ...neighborHits]).slice(0, topK + neighborHits.length);
-  const evidence = sources.map((hit) => hit.text).join("\n\n");
+  const askedFiches = mentionedFiches(question, Object.keys(index.fiches));
+  const evidenceHits =
+    askedFiches.length > 0
+      ? index.chunks
+          .filter((chunk) => askedFiches.includes(chunk.ficheId))
+          .map((chunk) => ({
+            ficheId: chunk.ficheId,
+            heading: chunk.heading,
+            text: chunk.text,
+            score: 1,
+          }))
+      : sources;
+  const evidence = joinEvidenceByFiche(evidenceHits);
   const answer = answerFromEvidence(question, evidence);
 
   return { answer, sources, neighbors };
@@ -92,6 +104,23 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   }
   const denom = Math.sqrt(na) * Math.sqrt(nb);
   return denom === 0 ? 0 : dot / denom;
+}
+
+function joinEvidenceByFiche(hits: QueryHit[]): string {
+  const byFiche = new Map<string, string[]>();
+  for (const hit of hits) {
+    const texts = byFiche.get(hit.ficheId) ?? [];
+    texts.push(hit.text);
+    byFiche.set(hit.ficheId, texts);
+  }
+  return [...byFiche.entries()]
+    .map(([ficheId, texts]) => `${ficheId}\n${texts.join("\n").replace(/\n{2,}/g, "\n")}`)
+    .join("\n\n");
+}
+
+function mentionedFiches(question: string, knownIds: string[]): string[] {
+  const asked = new Set(entityIdsIn(question));
+  return knownIds.filter((id) => asked.has(id.toLowerCase()));
 }
 
 function unique(ids: string[]): string[] {

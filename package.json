@@ -29,7 +29,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "atlas": "tsx src/cli.ts"
+    "atlas": "tsx src/cli.ts",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "rag",

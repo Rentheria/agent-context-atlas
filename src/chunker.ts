@@ -19,6 +19,7 @@ export function chunkMarkdown(
 ): Chunk[] {
   const maxChars = options.maxChars ?? DEFAULT_MAX_CHARS;
   const overlap = options.overlap ?? DEFAULT_OVERLAP;
+  assertWrapOptions(maxChars, overlap);
   const sections = splitByHeading(markdown);
   const chunks: Chunk[] = [];
 
@@ -76,6 +77,15 @@ function splitByHeading(markdown: string): Section[] {
     return [{ heading: "", text: markdown.trim() }];
   }
   return sections;
+}
+
+function assertWrapOptions(maxChars: number, overlap: number): void {
+  if (!Number.isFinite(maxChars) || maxChars <= 0) {
+    throw new Error("maxChars must be a positive number");
+  }
+  if (!Number.isFinite(overlap) || overlap < 0 || overlap >= maxChars) {
+    throw new Error("overlap must satisfy 0 <= overlap < maxChars");
+  }
 }
 
 function wrapText(text: string, maxChars: number, overlap: number): string[] {
