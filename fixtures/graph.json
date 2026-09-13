@@ -1,0 +1,10 @@
+{
+  "edges": [
+    { "from": "role-coordinator", "to": "bot-alpha", "type": "owns" },
+    { "from": "role-coordinator", "to": "bot-beta", "type": "owns" },
+    { "from": "bot-alpha", "to": "host-demo-01", "type": "comes_from" },
+    { "from": "bot-alpha", "to": "bot-beta", "type": "related" },
+    { "from": "role-operator", "to": "host-demo-01", "type": "related" },
+    { "from": "role-coordinator", "to": "role-operator", "type": "leads_to" }
+  ]
+}
