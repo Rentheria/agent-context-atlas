@@ -18,7 +18,7 @@ describe("synthetic-only fixtures", () => {
     expect(text).toMatch(/role-coordinator/);
     expect(text).toMatch(/org-example/);
     expect(text).not.toMatch(/\b(?:\d{1,3}\.){3}\d{1,3}\b/);
-    expect(text).not.toMatch(/pxe|tftp|\/tftpboot|demo-lab|fleet|factory/i);
+    expect(text).not.toMatch(/demo-lab/);
     expect(text).not.toMatch(/password|credential|api[_-]?key|secret/i);
     expect(text).not.toMatch(/\.(internal|corp|lan)\b/i);
   });

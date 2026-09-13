@@ -22,7 +22,7 @@ Fichas Markdown (una por máquina/rol/bot) + grafo con aristas tipadas + embeddi
 
 ## Política: solo fixtures sintéticos
 
-Este repositorio **no** incluye infraestructura privada de ningún despliegue real: nada de PXE, IPs, hostnames, rutas de fábrica, scrapers, credenciales, inventarios ni notas de ops.
+Este repositorio **no** incluye infraestructura privada de ningún despliegue real: nada de nombres reales de host/arranque/aprovisionamiento, IPs privadas, credenciales, inventarios, apodos de equipo ni nada que identifique infraestructura privada.
 
 Solo ids de demostración: `host-demo-01`, `bot-alpha`, `role-coordinator`, `bot-beta`, `role-operator`, `org-example`.
 

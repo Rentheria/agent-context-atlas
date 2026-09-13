@@ -22,7 +22,7 @@ Markdown fiches (one per machine/role/bot) + typed edges + incremental embedding
 
 ## Policy: synthetic fixtures only
 
-This repository includes **zero** private infra from any real deployment: no real PXE, IPs, hostnames, factory paths, scrapers, credentials, inventories, or ops notes.
+This repository includes **zero** private infra from any real deployment: no real host/boot/provisioning names, private IPs, credentials, inventories, teammate nicknames, or anything that fingerprints private infrastructure.
 
 Demo ids only: `host-demo-01`, `bot-alpha`, `role-coordinator`, `bot-beta`, `role-operator`, `org-example`.
 

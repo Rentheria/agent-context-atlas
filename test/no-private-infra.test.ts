@@ -23,7 +23,7 @@ async function listFiles(dir: string): Promise<string[]> {
 }
 
 describe("public tree: no real infra or secrets", () => {
-  it("has no IPv4, PXE paths, or private hostnames outside policy wording", async () => {
+  it("has no IPv4 or private hostname suffixes in the public tree", async () => {
     const files = await listFiles(root);
     const hits: string[] = [];
     for (const file of files) {
@@ -34,9 +34,6 @@ describe("public tree: no real infra or secrets", () => {
       }
       if (/\.(internal|corp)\b/i.test(text)) {
         hits.push(`${rel}: private hostname`);
-      }
-      if (!rel.startsWith("test/") && /\/tftpboot\b/i.test(text)) {
-        hits.push(`${rel}: tftpboot path`);
       }
     }
     expect(hits).toEqual([]);

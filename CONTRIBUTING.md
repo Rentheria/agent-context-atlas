@@ -20,7 +20,7 @@ Node ≥ 20. Embeddings HTTP is mocked in tests — no API key required.
 
 ## Rules
 
-- **Synthetic fixtures only.** No real people/teammate nicknames, PXE/fleet/factory/lab host naming, IPs, private paths, scrapers, credentials, inventories, or ops notes. Use obviously fake ids: `host-demo-01`, `bot-alpha`, `role-coordinator`, `org-example`.
+- **Synthetic fixtures only.** No real host/boot/provisioning names, private IPs, credentials, inventories, teammate nicknames, or anything that fingerprints private infrastructure. Use obviously fake ids: `host-demo-01`, `bot-alpha`, `role-coordinator`, `org-example`.
 - **Never invent measured numbers.** If a metric is not in the corpus, the answer is exactly `falta el dato`.
 - No multi-tenant SaaS, auth product, or hosting features.
 - Do not commit `.env`, `dist/`, `node_modules/`, or local index artifacts (`.atlas/`, `data/`).

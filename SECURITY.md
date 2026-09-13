@@ -6,7 +6,7 @@
 
 Embeddings use environment variables only (`ATLAS_EMBEDDINGS_API_KEY` or `OPENAI_API_KEY`). Copy `.env.example` to `.env` on your machine.
 
-This project ships **synthetic fixtures only**. Do not contribute credentials, keys, tokens, private paths, real inventories, internal names, jump hosts, or anything that points to real infrastructure or private ops.
+This project ships **synthetic fixtures only**. Do not contribute real host/boot/provisioning names, private IPs, credentials, inventories, teammate nicknames, or anything that fingerprints private infrastructure.
 
 ## Reporting a vulnerability
 
@@ -27,7 +27,7 @@ Include what you found, how to reproduce it, and its potential impact.
 
 Los embeddings usan solo variables de entorno (`ATLAS_EMBEDDINGS_API_KEY` o `OPENAI_API_KEY`). Copia `.env.example` a `.env` en tu máquina.
 
-Este proyecto solo incluye **fixtures sintéticos**. No contribuyas credenciales, claves, tokens, rutas privadas, inventarios reales, nombres internos, jump hosts ni nada que apunte a infraestructura u ops privadas.
+Este proyecto solo incluye **fixtures sintéticos**. No contribuyas nombres reales de host/arranque/aprovisionamiento, IPs privadas, credenciales, inventarios, apodos de equipo ni nada que identifique infraestructura privada.
 
 ## Reportar una vulnerabilidad
 
