@@ -3,7 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import type { EmbeddingsClient } from "./embeddings.js";
-import { createOpenAICompatibleEmbeddings, embeddingsConfigFromEnv } from "./embeddings.js";
+import {
+  createMockEmbeddings,
+  createOpenAICompatibleEmbeddings,
+  embeddingsConfigFromEnv,
+  mockEmbeddingVector,
+} from "./embeddings.js";
 import { ingest } from "./ingest.js";
 import { query } from "./query.js";
 import { FALTA_EL_DATO } from "./types.js";
@@ -102,30 +107,11 @@ export function countingEmbeddings(inner: EmbeddingsClient): CountingEmbeddingsC
 
 /** Deterministic bag-of-words vectors — no HTTP. Same idea as the test helper. */
 export function mockEmbeddingsClient(model = "bench-mock"): EmbeddingsClient {
-  return {
-    model,
-    async embed(texts: string[]) {
-      return texts.map((text) => fakeEmbedding(text));
-    },
-  };
+  return createMockEmbeddings(model);
 }
 
 export function fakeEmbedding(text: string, dim = 32): number[] {
-  const vec = new Array<number>(dim).fill(0);
-  const tokens = text.toLowerCase().split(/\W+/).filter(Boolean);
-  for (const token of tokens) {
-    let hash = 0;
-    for (let i = 0; i < token.length; i += 1) {
-      hash = (hash * 31 + token.charCodeAt(i)) >>> 0;
-    }
-    const index = hash % dim;
-    vec[index] = (vec[index] ?? 0) + 1;
-  }
-  let norm = 0;
-  for (const value of vec) norm += value * value;
-  norm = Math.sqrt(norm);
-  if (norm === 0) return vec;
-  return vec.map((value) => value / norm);
+  return mockEmbeddingVector(text, dim);
 }
 
 export async function writeSyntheticCorpus(

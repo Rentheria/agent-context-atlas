@@ -2,7 +2,7 @@
 
 Copy-paste only. Demo ids: `host-demo-01`, `bot-alpha`, `bot-beta`, `role-coordinator`, `role-operator`, `org-example`.
 
-**No API key** is required for tests or `npm run bench` (default `--mode mock`). The CLI ingest/query path talks to an OpenAI-compatible `POST /v1/embeddings` endpoint when you do not inject a mock client — set env locally if you want real HTTP.
+**No API key** is required for tests, `atlas ingest --mock` / `atlas query --mock`, or `npm run bench` (default `--mode mock`). Without `--mock`, the CLI talks to an OpenAI-compatible `POST /v1/embeddings` endpoint — set env locally, or you get a bilingual missing-key error (never a raw OpenAI 401).
 
 ## Install
 
@@ -12,7 +12,7 @@ npm install
 
 ## Ingest fixtures + query (library / after build)
 
-Embeddings HTTP is **mocked in `npm test`**. For a live CLI ingest you need a reachable embeddings URL (see `.env.example`). To see expected answers without a server, run the same questions through tests or the bench mock.
+Embeddings HTTP is **mocked in `npm test`**. For a live CLI demo without a server, use `--mock`. For real HTTP you need a reachable embeddings URL (see `.env.example`).
 
 ### Expected answers (fixtures)
 
@@ -33,7 +33,9 @@ Validate the fixture graph (no embeddings, no API key):
 
 ```bash
 npx atlas doctor --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas doctor --json --fiches fixtures/fiches --graph fixtures/graph.json
 npx atlas graph --format mermaid
+npx atlas graph --format mermaid --out examples/graph.mmd
 npx atlas graph --format dot
 ```
 
@@ -64,15 +66,14 @@ npm run bench -- --mode http
 
 Uses `ATLAS_EMBEDDINGS_BASE_URL`, `ATLAS_EMBEDDINGS_MODEL`, and `ATLAS_EMBEDDINGS_API_KEY` / `OPENAI_API_KEY`.
 
-## CLI after you have an embeddings endpoint
+## CLI without an embeddings endpoint (`--mock`)
 
 ```bash
-cp .env.example .env   # fill on your machine; never commit
 npm run build
-npx atlas ingest --fiches fixtures/fiches --graph fixtures/graph.json
-npx atlas query "RAM_GB de host-demo-01"
-npx atlas query "latencia de bot-alpha"
-npx atlas query --json "latencia de bot-alpha"
+npx atlas ingest --mock --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas query --mock "RAM_GB de host-demo-01"
+npx atlas query --mock "latencia de bot-alpha"
+npx atlas query --mock --json "latencia de bot-alpha"
 ```
 
 `--json` prints `{ "answer", "sources", "neighbors" }` with no extra `Fuentes:` lines.
@@ -80,6 +81,8 @@ npx atlas query --json "latencia de bot-alpha"
 Without building:
 
 ```bash
-npm run atlas -- ingest
-npm run atlas -- query "max_context_tokens of bot-alpha"
+npm run atlas -- ingest --mock
+npm run atlas -- query --mock "max_context_tokens of bot-alpha"
 ```
+
+Live HTTP (optional): `cp .env.example .env` and omit `--mock`. Cloud URLs need `ATLAS_EMBEDDINGS_API_KEY`.
