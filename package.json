@@ -45,7 +45,9 @@
     "agent-context",
     "doc-graph",
     "markdown",
-    "cli"
+    "cli",
+    "typescript",
+    "openai"
   ],
   "author": "Alejandro Rentheria (Rentheria)",
   "license": "MIT",
