@@ -14,12 +14,22 @@ Packaging, graph UX, and a machine-local performance suite. MVP behavior is unch
 - Mermaid view of typed edges after ingest: `.atlas/NAV.md` includes a `flowchart LR` fence; `.atlas/GRAPH.mmd` is the same graph as a standalone diagram.
 - `npm run bench` (`tsx scripts/bench.ts`) — synthetic corpus, cold ingest vs unchanged re-ingest (`content_hash` reuse), query p50/p95 including a `falta el dato` question. Default mode is **mock** (CI-safe). Optional `--mode http` uses the existing embeddings env vars. Writes `bench-results.json` (gitignored).
 - `atlas query --json` for machine-readable `{ answer, sources, neighbors }`.
+- `ROADMAP.md` (public P0/P1/P2; no private ops).
+- `atlas doctor` — edges must reference existing fiches; reports orphan fiches; generic synthetic guardrails on fixture text.
+- `atlas graph --format mermaid|dot` to stdout (in addition to ingest `NAV.md` / `GRAPH.mmd`).
+- CI smoke: `npm run bench -- --ci` / `npm run bench:ci` (hard: embedding reuse + `falta el dato`; soft timing warnings only).
+- Richer `examples/` (hit vs `falta el dato`, `graph.mmd`) and a Mermaid snippet in the README.
+- Coverage badge (Vitest v8 in CI). Commented npm version badge until a registry publish.
+
+### Guardrails
+
+- Stronger generic scans (IPv4, private IPv6 prefixes, private-looking host suffixes, credential-like *values*). No teammate nicknames or private product names as string literals.
 
 ### Changed
 
 - Package version `0.1.0` → `0.2.0`.
-- README (ES + EN): short Rendimiento / Performance section that points at `npm run bench` and does not publish invented timings.
-- CI still typechecks and tests on push/PR to `main` and `dev`; also runs coverage and the mock bench.
+- README (ES + EN): naming note (public synthetic wiki/RAG toolkit — not a private ops inventory, not a personal notes vault); Rendimiento / Performance section that points at `npm run bench` and does not publish invented timings.
+- CI still typechecks and tests on push/PR to `main` and `dev`; also runs coverage and `npm run bench:ci`.
 
 ## [0.1.0] — 2026-09-13
 

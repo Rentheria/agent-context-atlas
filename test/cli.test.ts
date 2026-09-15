@@ -25,6 +25,8 @@ describe("CLI", () => {
       const code = await run(["help"]);
       expect(code).toBe(0);
       expect(logs.join("\n")).toMatch(/atlas ingest/);
+      expect(logs.join("\n")).toMatch(/atlas doctor/);
+      expect(logs.join("\n")).toMatch(/atlas graph/);
       expect(logs.join("\n")).toMatch(/--json/);
       expect(logs.join("\n")).toMatch(/falta el dato/);
 
@@ -66,6 +68,58 @@ describe("CLI", () => {
     } finally {
       console.log = log;
       await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("doctors the shipped fixtures and prints mermaid/dot graphs", async () => {
+    const logs: string[] = [];
+    const log = console.log;
+    console.log = (message?: unknown) => {
+      logs.push(String(message ?? ""));
+    };
+    try {
+      const doctorCode = await run([
+        "doctor",
+        "--fiches",
+        path.join(fixtures, "fiches"),
+        "--graph",
+        path.join(fixtures, "graph.json"),
+      ]);
+      expect(doctorCode).toBe(0);
+      expect(logs.join("\n")).toMatch(/OK/);
+
+      logs.length = 0;
+      const mermaidCode = await run([
+        "graph",
+        "--format",
+        "mermaid",
+        "--fiches",
+        path.join(fixtures, "fiches"),
+        "--graph",
+        path.join(fixtures, "graph.json"),
+      ]);
+      expect(mermaidCode).toBe(0);
+      expect(logs.join("\n")).toMatch(/flowchart LR/);
+      expect(logs.join("\n")).toMatch(/comes_from/);
+
+      logs.length = 0;
+      const dotCode = await run([
+        "graph",
+        "--format",
+        "dot",
+        "--fiches",
+        path.join(fixtures, "fiches"),
+        "--graph",
+        path.join(fixtures, "graph.json"),
+      ]);
+      expect(dotCode).toBe(0);
+      expect(logs.join("\n")).toMatch(/digraph atlas/);
+      expect(logs.join("\n")).toMatch(/comes_from/);
+
+      const bad = await run(["graph", "--format", "png"]);
+      expect(bad).toBe(1);
+    } finally {
+      console.log = log;
     }
   });
 

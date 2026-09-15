@@ -4,11 +4,13 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   benchQuestions,
+  evaluateBenchCi,
   formatBenchReport,
   percentile,
   runBench,
   runBenchCli,
   writeSyntheticCorpus,
+  type BenchReport,
 } from "../src/bench.js";
 import { FALTA_EL_DATO } from "../src/types.js";
 
@@ -85,6 +87,28 @@ describe("bench suite (mock embeddings)", () => {
     expect(percentile([10, 20, 30, 40], 50)).toBe(20);
     expect(percentile([10, 20, 30, 40], 95)).toBe(40);
   });
+
+  it("CI evaluation hard-fails reuse bugs and only warns on soft timings", () => {
+    const ok = evaluateBenchCi(fakeReport({}));
+    expect(ok.hardFails).toEqual([]);
+    expect(ok.softWarns).toEqual([]);
+
+    const broken = evaluateBenchCi(
+      fakeReport({
+        reingest: { ms: 1, embedded: 3, reused: 0, embedCalls: 1, embedTexts: 3 },
+      }),
+    );
+    expect(broken.hardFails.length).toBeGreaterThan(0);
+
+    const slow = evaluateBenchCi(
+      fakeReport({
+        cold: { ms: 70_000, embedded: 4, reused: 0, embedCalls: 1, embedTexts: 4 },
+        queryP95: 12_000,
+      }),
+    );
+    expect(slow.hardFails).toEqual([]);
+    expect(slow.softWarns.length).toBe(2);
+  });
 });
 
 describe("bench CLI", () => {
@@ -98,6 +122,7 @@ describe("bench CLI", () => {
       const code = await runBenchCli(["--help"]);
       expect(code).toBe(0);
       expect(logs.join("\n")).toMatch(/--mode/);
+      expect(logs.join("\n")).toMatch(/--ci/);
       expect(logs.join("\n")).toMatch(/falta el dato/);
     } finally {
       console.log = log;
@@ -118,4 +143,54 @@ describe("bench CLI", () => {
       console.error = err;
     }
   });
+
+  it("runs --ci smoke with mock embeddings and exits 0", async () => {
+    await withTempDir(async (dir) => {
+      const logs: string[] = [];
+      const log = console.log;
+      console.log = (message?: unknown) => {
+        logs.push(String(message ?? ""));
+      };
+      try {
+        const code = await runBenchCli(["--ci", "--out", path.join(dir, "bench-results.json")]);
+        expect(code).toBe(0);
+        expect(logs.join("\n")).toMatch(/CI smoke: hard checks passed/);
+        expect(logs.join("\n")).toMatch(/embedded=0/);
+      } finally {
+        console.log = log;
+      }
+    });
+  });
 });
+
+function fakeReport(overrides: {
+  cold?: BenchReport["cold"];
+  reingest?: BenchReport["reingest"];
+  queryP95?: number;
+}): BenchReport {
+  const cold = overrides.cold ?? { ms: 10, embedded: 4, reused: 0, embedCalls: 1, embedTexts: 4 };
+  const reingest = overrides.reingest ?? {
+    ms: 4,
+    embedded: 0,
+    reused: 4,
+    embedCalls: 0,
+    embedTexts: 0,
+  };
+  return {
+    generatedAt: "2026-09-15T00:00:00.000Z",
+    mode: "mock",
+    node: "v20",
+    ficheCount: 9,
+    chunkCount: 4,
+    cold,
+    reingest,
+    query: {
+      samples: [
+        { question: "RAM_GB de host-demo-00", answer: "RAM_GB: 4", ms: 1 },
+        { question: "latencia de bot-synth-00", answer: FALTA_EL_DATO, ms: 1 },
+      ],
+      p50Ms: 1,
+      p95Ms: overrides.queryP95 ?? 2,
+    },
+  };
+}

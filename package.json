@@ -23,6 +23,7 @@
     "README.md",
     "README.en.md",
     "CHANGELOG.md",
+    "ROADMAP.md",
     "LICENSE",
     "examples"
   ],
@@ -34,6 +35,7 @@
     "test:coverage": "vitest run --coverage",
     "atlas": "tsx src/cli.ts",
     "bench": "tsx scripts/bench.ts",
+    "bench:ci": "tsx scripts/bench.ts --ci",
     "prepack": "npm run build",
     "prepublishOnly": "npm run build"
   },

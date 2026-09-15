@@ -3,12 +3,22 @@
 # agent-context-atlas
 
 [![CI](https://github.com/Rentheria/agent-context-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/Rentheria/agent-context-atlas/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-Vitest%20v8%20in%20CI-informational)](https://github.com/Rentheria/agent-context-atlas/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<!-- [![npm](https://img.shields.io/npm/v/agent-context-atlas.svg)](https://www.npmjs.com/package/agent-context-atlas) -->
 
 Wiki + grafo tipado + RAG híbrido para **contexto de agentes/máquinas**.  
 No es un tracker de gasto.
 
 **Owner:** Alejandro Rentheria ([Rentheria](https://github.com/Rentheria)). Producto de portafolio, MIT.
+
+## Qué es (y qué no es)
+
+Este producto es un **toolkit público** de wiki de contexto sintético + grafo tipado + RAG. Las fichas de demostración (`host-demo-01`, `bot-alpha`, `org-example`, …) existen para que un agente **cite el corpus** o responda exactamente `falta el dato`.
+
+**No** es un índice de inventario de operaciones privadas. **No** es una bóveda de notas personales. Este repositorio no nombra sistemas privados de terceros ni apodos de equipo.
+
+Roadmap público: [ROADMAP.md](ROADMAP.md).
 
 ## TL;DR
 
@@ -51,7 +61,24 @@ npm run atlas -- ingest
 npm run atlas -- query "max_context_tokens of bot-alpha"
 ```
 
-Índice local: `.atlas/` (gitignored). La ingestión escribe `.atlas/NAV.md` (navegación Markdown + bloque Mermaid) y `.atlas/GRAPH.mmd` (el mismo grafo tipado).
+Índice local: `.atlas/` (gitignored). La ingestión escribe `.atlas/NAV.md` (navegación Markdown + bloque Mermaid) y `.atlas/GRAPH.mmd` (el mismo grafo tipado). Sin embeddings:
+
+```bash
+npx atlas doctor --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas graph --format mermaid
+npx atlas graph --format dot
+```
+
+Vista Mermaid de las aristas tipadas del fixture (ids sintéticos):
+
+```mermaid
+flowchart LR
+  role_coordinator["role-coordinator"] -->|owns| bot_alpha["bot-alpha"]
+  bot_alpha["bot-alpha"] -->|comes_from| host_demo_01["host-demo-01"]
+  bot_alpha["bot-alpha"] -->|related| bot_beta["bot-beta"]
+```
+
+Hit vs miss: [examples/hit-vs-falta.md](examples/hit-vs-falta.md). Grafo completo: [examples/graph.mmd](examples/graph.mmd).
 
 ## Variables de entorno
 
@@ -77,7 +104,9 @@ Nunca commitees `.env`. El cliente hace `POST {baseUrl}/embeddings`.
 
 No hay cifras publicadas aquí: son locales y cambian con CPU/IO. Ejecuta `npm run bench` (opcionalmente escribe `bench-results.json`, gitignored). El suite demuestra reuse incremental y que el camino de consulta es medible — **no** un SLA de producción.
 
-Quickstart sintético (comandos + respuestas esperadas, sin inventar infra): [examples/synthetic-quickstart.md](examples/synthetic-quickstart.md).
+Quickstart sintético: [examples/synthetic-quickstart.md](examples/synthetic-quickstart.md). Índice: [examples/README.md](examples/README.md).
+
+CI ejecuta `npm run bench -- --ci` (humo mock). El bench local completo es `npm run bench`. Los umbrales de tiempo del smoke son **avisos suaves** (no fallan CI); el fail duro es reuse de `content_hash` + presencia de `falta el dato`. Ver `npm run bench -- --help`. No hay cifras publicadas aquí.
 
 ## Librería
 
@@ -94,6 +123,7 @@ npm test           # Vitest; HTTP de embeddings mockeado
 npm run test:coverage
 npm run typecheck
 npm run bench      # corpus sintético; mock por defecto
+npm run bench:ci   # humo rápido (mismo que CI)
 ```
 
 ## See also

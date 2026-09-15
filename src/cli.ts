@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
+import { doctorCorpus, formatDoctorReport } from "./doctor.js";
 import type { EmbeddingsClient } from "./embeddings.js";
 import { createOpenAICompatibleEmbeddings, embeddingsConfigFromEnv } from "./embeddings.js";
+import { loadFiches } from "./fiche.js";
+import { buildGraph, loadGraphFile, renderGraphDot, renderGraphMermaid } from "./graph.js";
 import { ingest } from "./ingest.js";
 import { query } from "./query.js";
 import type { QueryResult } from "./types.js";
@@ -23,6 +26,12 @@ export async function run(argv: string[], deps: CliDeps = {}): Promise<number> {
   }
   if (command === "query") {
     return runQuery(argv.slice(1), deps);
+  }
+  if (command === "doctor") {
+    return runDoctor(argv.slice(1));
+  }
+  if (command === "graph") {
+    return runGraph(argv.slice(1));
   }
 
   console.error(`Unknown command: ${command}`);
@@ -108,6 +117,66 @@ async function runQuery(argv: string[], deps: CliDeps): Promise<number> {
   return 0;
 }
 
+async function runDoctor(argv: string[]): Promise<number> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      fiches: { type: "string" },
+      graph: { type: "string" },
+      json: { type: "boolean" },
+      help: { type: "boolean", short: "h" },
+    },
+  });
+  if (values.help) {
+    printHelp();
+    return 0;
+  }
+
+  const report = await doctorCorpus({
+    fichesDir: values.fiches ?? "fixtures/fiches",
+    graphPath: values.graph ?? "fixtures/graph.json",
+  });
+
+  if (values.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log(formatDoctorReport(report));
+  }
+  return report.ok ? 0 : 1;
+}
+
+async function runGraph(argv: string[]): Promise<number> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      fiches: { type: "string" },
+      graph: { type: "string" },
+      format: { type: "string" },
+      help: { type: "boolean", short: "h" },
+    },
+  });
+  if (values.help) {
+    printHelp();
+    return 0;
+  }
+
+  const format = values.format ?? "mermaid";
+  if (format !== "mermaid" && format !== "dot") {
+    console.error("Uso: atlas graph --format mermaid|dot");
+    return 1;
+  }
+
+  const fichesDir = values.fiches ?? "fixtures/fiches";
+  const graphPath = values.graph ?? "fixtures/graph.json";
+  const fiches = await loadFiches(fichesDir);
+  const extra = await loadGraphFile(graphPath);
+  const graph = buildGraph(fiches, extra);
+  const titles = Object.fromEntries(fiches.map((fiche) => [fiche.id, fiche.title]));
+  const rendered = format === "dot" ? renderGraphDot(graph, titles) : renderGraphMermaid(graph, titles);
+  console.log(rendered.trimEnd());
+  return 0;
+}
+
 export function formatQueryJson(result: QueryResult): string {
   return `${JSON.stringify(result, null, 2)}\n`.trimEnd();
 }
@@ -124,6 +193,8 @@ function printHelp(): void {
 Uso:
   atlas ingest [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--index .atlas]
   atlas query "..." [--index .atlas] [--json]
+  atlas doctor [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--json]
+  atlas graph [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--format mermaid|dot]
 
 Variables de entorno:
   ATLAS_EMBEDDINGS_BASE_URL   endpoint OpenAI-compatible (default https://api.openai.com/v1)

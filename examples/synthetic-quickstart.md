@@ -29,6 +29,16 @@ npm test
 npm run typecheck
 ```
 
+Validate the fixture graph (no embeddings, no API key):
+
+```bash
+npx atlas doctor --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas graph --format mermaid
+npx atlas graph --format dot
+```
+
+`doctor` exits 0 on the shipped fixtures (every edge endpoint exists). Orphans would be listed as warnings.
+
 After a successful ingest (CLI or library), the local index (gitignored) contains:
 
 - `.atlas/index.json` — chunks + embeddings + graph
@@ -40,6 +50,8 @@ After a successful ingest (CLI or library), the local index (gitignored) contain
 ```bash
 npm run bench
 # same as: npx tsx scripts/bench.ts --mode mock --fiches 80
+npm run bench:ci
+# same as: npx tsx scripts/bench.ts --ci   (mock, fewer fiches; CI smoke)
 ```
 
 Prints a machine-local report: cold ingest vs unchanged re-ingest (embed count must drop to 0 when `content_hash` matches) and query p50/p95 on a **generated** synthetic corpus (`host-demo-*`, `bot-synth-*`, `role-synth-*`, `org-example` only). Optionally writes `bench-results.json` (gitignored).

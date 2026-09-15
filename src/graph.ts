@@ -109,6 +109,25 @@ function escapeMermaidLabel(text: string): string {
   return text.replace(/["[\]|]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+/** Graphviz DOT view of the same typed edges (stdout via `atlas graph --format dot`). */
+export function renderGraphDot(graph: DocGraph, titles: Record<string, string> = {}): string {
+  const lines = ["digraph atlas {", "  rankdir=LR;"];
+  for (const id of graph.nodes) {
+    const title = titles[id];
+    const label = title && title !== id ? `${id} — ${title}` : id;
+    lines.push(`  ${dotQuote(id)} [label=${dotQuote(label)}];`);
+  }
+  for (const edge of graph.edges) {
+    lines.push(`  ${dotQuote(edge.from)} -> ${dotQuote(edge.to)} [label=${dotQuote(edge.type)}];`);
+  }
+  lines.push("}", "");
+  return lines.join("\n");
+}
+
+function dotQuote(text: string): string {
+  return JSON.stringify(text);
+}
+
 function extractEdges(parsed: unknown): unknown[] {
   if (Array.isArray(parsed)) return parsed;
   if (parsed && typeof parsed === "object" && "edges" in parsed) {

@@ -16,9 +16,12 @@ npm test
 npm run test:coverage
 npm run typecheck
 npm run bench      # mock embeddings; no API key
+npm run bench:ci   # fast smoke (same checks as CI)
 ```
 
 Node ≥ 20. Embeddings HTTP is mocked in tests and in `npm run bench` (default `--mode mock`) — no API key required.
+
+Public scope: [ROADMAP.md](ROADMAP.md). This repo is a **synthetic context wiki/RAG toolkit**, not a private ops inventory and not a personal notes vault.
 
 ## Rules
 
@@ -28,6 +31,8 @@ Node ≥ 20. Embeddings HTTP is mocked in tests and in `npm run bench` (default 
 - Do not commit `.env`, `dist/`, `node_modules/`, local index artifacts (`.atlas/`, `data/`), or `bench-results.json`.
 - Keep the MIT license.
 - Add or update unit tests with every code change. Use `npm run bench` to show `content_hash` reuse; do not invent timings in the README.
+- Guardrail tests use **generic patterns** only. Do not add teammate nicknames or private product/infra names as string literals.
+- `atlas doctor` should stay green on `fixtures/`.
 
 ## Edge types
 

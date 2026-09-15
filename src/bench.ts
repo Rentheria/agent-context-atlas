@@ -9,7 +9,12 @@ import { query } from "./query.js";
 import { FALTA_EL_DATO } from "./types.js";
 
 export const DEFAULT_BENCH_FICHES = 80;
+export const DEFAULT_CI_FICHES = 12;
 export const DEFAULT_BENCH_OUT = "bench-results.json";
+
+/** Soft CI timing gates (warn only). Reuse is a hard check. Not a production SLA. */
+export const CI_SOFT_COLD_MS = 60_000;
+export const CI_SOFT_QUERY_P95_MS = 10_000;
 
 export type BenchMode = "mock" | "http";
 
@@ -307,6 +312,37 @@ export function formatBenchReport(report: BenchReport): string {
   return lines.join("\n");
 }
 
+export interface BenchCiEvaluation {
+  hardFails: string[];
+  softWarns: string[];
+}
+
+export function evaluateBenchCi(report: BenchReport): BenchCiEvaluation {
+  const hardFails: string[] = [];
+  const softWarns: string[] = [];
+
+  if (report.reingest.embedded !== 0 || report.reingest.embedTexts !== 0) {
+    hardFails.push(
+      `re-ingest must reuse embeddings (embedded=${report.reingest.embedded} embedTexts=${report.reingest.embedTexts})`,
+    );
+  }
+  if (report.reingest.reused !== report.chunkCount) {
+    hardFails.push(`re-ingest reused=${report.reingest.reused} expected ${report.chunkCount}`);
+  }
+  if (!report.query.samples.some((sample) => sample.answer === FALTA_EL_DATO)) {
+    hardFails.push(`query set must include an answer of "${FALTA_EL_DATO}"`);
+  }
+
+  if (report.cold.ms > CI_SOFT_COLD_MS) {
+    softWarns.push(`cold ingest ${report.cold.ms.toFixed(0)} ms > soft ${CI_SOFT_COLD_MS} ms`);
+  }
+  if (report.query.p95Ms > CI_SOFT_QUERY_P95_MS) {
+    softWarns.push(`query p95 ${report.query.p95Ms.toFixed(0)} ms > soft ${CI_SOFT_QUERY_P95_MS} ms`);
+  }
+
+  return { hardFails, softWarns };
+}
+
 export async function runBenchCli(argv: string[]): Promise<number> {
   const { values } = parseArgs({
     args: argv,
@@ -314,6 +350,7 @@ export async function runBenchCli(argv: string[]): Promise<number> {
       fiches: { type: "string" },
       mode: { type: "string" },
       out: { type: "string" },
+      ci: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -322,7 +359,12 @@ export async function runBenchCli(argv: string[]): Promise<number> {
     return 0;
   }
 
-  const ficheCount = values.fiches ? Number(values.fiches) : DEFAULT_BENCH_FICHES;
+  const ci = Boolean(values.ci);
+  const ficheCount = values.fiches
+    ? Number(values.fiches)
+    : ci
+      ? DEFAULT_CI_FICHES
+      : DEFAULT_BENCH_FICHES;
   if (!Number.isInteger(ficheCount) || ficheCount < 3) {
     console.error("--fiches must be an integer >= 3");
     return 1;
@@ -331,6 +373,10 @@ export async function runBenchCli(argv: string[]): Promise<number> {
   const mode = parseMode(values.mode ?? process.env.ATLAS_BENCH_MODE ?? "mock");
   if (!mode) {
     console.error("--mode must be mock or http");
+    return 1;
+  }
+  if (ci && mode !== "mock") {
+    console.error("--ci requires --mode mock");
     return 1;
   }
 
@@ -346,6 +392,22 @@ export async function runBenchCli(argv: string[]): Promise<number> {
   console.log(formatBenchReport(report));
   console.log("");
   console.log(`Wrote ${outPath}`);
+
+  if (ci) {
+    const evalResult = evaluateBenchCi(report);
+    for (const warn of evalResult.softWarns) {
+      console.warn(`soft threshold: ${warn}`);
+    }
+    if (evalResult.hardFails.length > 0) {
+      for (const fail of evalResult.hardFails) {
+        console.error(`CI hard fail: ${fail}`);
+      }
+      return 1;
+    }
+    console.log(
+      "CI smoke: hard checks passed (content_hash reuse + falta el dato). Soft timing gates do not fail CI.",
+    );
+  }
   return 0;
 }
 
@@ -426,10 +488,14 @@ function printBenchHelp(): void {
 
 Uso:
   npm run bench -- [--fiches ${DEFAULT_BENCH_FICHES}] [--mode mock|http] [--out ${DEFAULT_BENCH_OUT}]
+  npm run bench -- --ci
 
-  --fiches   número de fichas sintéticas (default ${DEFAULT_BENCH_FICHES}, mínimo 3)
+  --fiches   número de fichas sintéticas (default ${DEFAULT_BENCH_FICHES}, o ${DEFAULT_CI_FICHES} con --ci)
   --mode     mock (default, CI-safe) o http (OpenAI-compatible vía env)
   --out      escribe JSON (default ${DEFAULT_BENCH_OUT}, gitignored)
+  --ci       humo rápido (mock, pocas fichas). Hard fail si el re-ingest no reusa
+             embeddings o si ninguna query responde "${FALTA_EL_DATO}".
+             Soft warn (no falla) si cold > ${CI_SOFT_COLD_MS} ms o query p95 > ${CI_SOFT_QUERY_P95_MS} ms.
 
 Mide: ingestión en frío, re-ingest con content_hash, latencia p50/p95 de query
 (incluye una pregunta que responde "${FALTA_EL_DATO}").
@@ -438,5 +504,5 @@ Variables (modo http): las mismas que el CLI — ATLAS_EMBEDDINGS_BASE_URL,
 ATLAS_EMBEDDINGS_MODEL, ATLAS_EMBEDDINGS_API_KEY / OPENAI_API_KEY.
 ATLAS_BENCH_MODE y ATLAS_BENCH_OUT equivalen a --mode y --out.
 
-No es un SLA de producción.`);
+No es un SLA de producción. El bench local completo es \`npm run bench\` (sin --ci).`);
 }
