@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
+import type { EmbeddingsClient } from "./embeddings.js";
 import { createOpenAICompatibleEmbeddings, embeddingsConfigFromEnv } from "./embeddings.js";
 import { ingest } from "./ingest.js";
 import { query } from "./query.js";
+import type { QueryResult } from "./types.js";
 
-export async function run(argv: string[]): Promise<number> {
+export interface CliDeps {
+  embeddings?: EmbeddingsClient;
+}
+
+export async function run(argv: string[], deps: CliDeps = {}): Promise<number> {
   const command = argv[0];
   if (!command || command === "-h" || command === "--help" || command === "help") {
     printHelp();
@@ -13,10 +19,10 @@ export async function run(argv: string[]): Promise<number> {
   }
 
   if (command === "ingest") {
-    return runIngest(argv.slice(1));
+    return runIngest(argv.slice(1), deps);
   }
   if (command === "query") {
-    return runQuery(argv.slice(1));
+    return runQuery(argv.slice(1), deps);
   }
 
   console.error(`Unknown command: ${command}`);
@@ -24,7 +30,7 @@ export async function run(argv: string[]): Promise<number> {
   return 1;
 }
 
-async function runIngest(argv: string[]): Promise<number> {
+async function runIngest(argv: string[], deps: CliDeps): Promise<number> {
   const { values } = parseArgs({
     args: argv,
     options: {
@@ -39,7 +45,7 @@ async function runIngest(argv: string[]): Promise<number> {
     return 0;
   }
 
-  const embeddings = clientFromEnv();
+  const embeddings = clientFromEnv(deps);
   const result = await ingest({
     fichesDir: values.fiches ?? "fixtures/fiches",
     graphPath: values.graph ?? "fixtures/graph.json",
@@ -52,15 +58,17 @@ async function runIngest(argv: string[]): Promise<number> {
   );
   console.log(`Índice: ${result.indexPath}`);
   console.log(`Navegación (vista del grafo): ${result.navPath}`);
+  console.log(`Grafo Mermaid: ${result.mermaidPath}`);
   return 0;
 }
 
-async function runQuery(argv: string[]): Promise<number> {
+async function runQuery(argv: string[], deps: CliDeps): Promise<number> {
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
     options: {
       index: { type: "string" },
+      json: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -75,12 +83,17 @@ async function runQuery(argv: string[]): Promise<number> {
     return 1;
   }
 
-  const embeddings = clientFromEnv();
+  const embeddings = clientFromEnv(deps);
   const result = await query({
     question,
     indexDir: values.index ?? ".atlas",
     embeddings,
   });
+
+  if (values.json) {
+    console.log(formatQueryJson(result));
+    return 0;
+  }
 
   console.log(result.answer);
   if (result.sources.length > 0) {
@@ -95,7 +108,12 @@ async function runQuery(argv: string[]): Promise<number> {
   return 0;
 }
 
-function clientFromEnv() {
+export function formatQueryJson(result: QueryResult): string {
+  return `${JSON.stringify(result, null, 2)}\n`.trimEnd();
+}
+
+function clientFromEnv(deps: CliDeps): EmbeddingsClient {
+  if (deps.embeddings) return deps.embeddings;
   const config = embeddingsConfigFromEnv();
   return createOpenAICompatibleEmbeddings(config);
 }
@@ -105,7 +123,7 @@ function printHelp(): void {
 
 Uso:
   atlas ingest [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--index .atlas]
-  atlas query "..." [--index .atlas]
+  atlas query "..." [--index .atlas] [--json]
 
 Variables de entorno:
   ATLAS_EMBEDDINGS_BASE_URL   endpoint OpenAI-compatible (default https://api.openai.com/v1)

@@ -12,6 +12,10 @@ export function navFilePath(indexDir: string): string {
   return path.join(indexDir, "NAV.md");
 }
 
+export function mermaidFilePath(indexDir: string): string {
+  return path.join(indexDir, "GRAPH.mmd");
+}
+
 export async function loadIndex(indexDir: string): Promise<AtlasIndex | null> {
   try {
     const raw = await readFile(indexFilePath(indexDir), "utf8");
@@ -35,6 +39,13 @@ export async function saveNav(indexDir: string, markdown: string): Promise<strin
   await mkdir(indexDir, { recursive: true });
   const filePath = navFilePath(indexDir);
   await writeFile(filePath, markdown.endsWith("\n") ? markdown : `${markdown}\n`, "utf8");
+  return filePath;
+}
+
+export async function saveMermaid(indexDir: string, mermaid: string): Promise<string> {
+  await mkdir(indexDir, { recursive: true });
+  const filePath = mermaidFilePath(indexDir);
+  await writeFile(filePath, mermaid.endsWith("\n") ? mermaid : `${mermaid}\n`, "utf8");
   return filePath;
 }
 

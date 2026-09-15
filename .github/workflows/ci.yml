@@ -27,3 +27,9 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Coverage
+        run: npm run test:coverage
+
+      - name: Bench (mock embeddings)
+        run: npm run bench -- --fiches 50 --out bench-results.json

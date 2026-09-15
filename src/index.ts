@@ -16,7 +16,14 @@ export type {
 export { contentHash } from "./hash.js";
 export { chunkMarkdown } from "./chunker.js";
 export { loadFiches, parseFiche } from "./fiche.js";
-export { buildGraph, expandNeighbors, loadGraphFile, renderGraphMarkdown } from "./graph.js";
+export {
+  buildGraph,
+  expandNeighbors,
+  loadGraphFile,
+  mermaidNodeId,
+  renderGraphMarkdown,
+  renderGraphMermaid,
+} from "./graph.js";
 export {
   createOpenAICompatibleEmbeddings,
   embeddingsConfigFromEnv,

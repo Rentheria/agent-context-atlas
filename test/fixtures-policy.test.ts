@@ -11,7 +11,8 @@ describe("synthetic-only fixtures", () => {
     const fiches = await loadFiches(path.join(root, "fixtures/fiches"));
     const blob = fiches.map((fiche) => fiche.raw).join("\n");
     const graph = await readFile(path.join(root, "fixtures/graph.json"), "utf8");
-    const text = `${blob}\n${graph}`;
+    const example = await readFile(path.join(root, "examples/synthetic-quickstart.md"), "utf8");
+    const text = `${blob}\n${graph}\n${example}`;
 
     expect(text).toMatch(/host-demo-01/);
     expect(text).toMatch(/bot-alpha/);

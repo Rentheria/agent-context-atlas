@@ -79,6 +79,7 @@ export interface IngestResult {
   reused: number;
   indexPath: string;
   navPath: string;
+  mermaidPath: string;
 }
 
 export const FALTA_EL_DATO = "falta el dato";
