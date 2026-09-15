@@ -1,0 +1,7 @@
+flowchart LR
+  role_coordinator["role-coordinator"] -->|owns| bot_alpha["bot-alpha"]
+  role_coordinator["role-coordinator"] -->|owns| bot_beta["bot-beta"]
+  bot_alpha["bot-alpha"] -->|comes_from| host_demo_01["host-demo-01"]
+  bot_alpha["bot-alpha"] -->|related| bot_beta["bot-beta"]
+  role_operator["role-operator"] -->|related| host_demo_01["host-demo-01"]
+  role_coordinator["role-coordinator"] -->|leads_to| role_operator["role-operator"]

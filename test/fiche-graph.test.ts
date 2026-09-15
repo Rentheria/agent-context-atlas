@@ -44,6 +44,8 @@ describe("fiche loader + graph", () => {
     expect(nav).toContain("# Atlas — navegación");
     expect(nav).toContain("**owns** → bot-alpha");
     expect(nav).toContain("**comes_from** → host-demo-01");
+    expect(nav).toContain("```mermaid");
+    expect(nav).toContain("flowchart LR");
   });
 
   it("rejects unknown edge types", async () => {

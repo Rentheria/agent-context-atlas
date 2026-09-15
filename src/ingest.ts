@@ -1,8 +1,8 @@
 import { chunkMarkdown } from "./chunker.js";
 import type { EmbeddingsClient } from "./embeddings.js";
 import { loadFiches } from "./fiche.js";
-import { buildGraph, loadGraphFile, renderGraphMarkdown } from "./graph.js";
-import { loadIndex, saveIndex, saveNav } from "./store.js";
+import { buildGraph, loadGraphFile, renderGraphMarkdown, renderGraphMermaid } from "./graph.js";
+import { loadIndex, saveIndex, saveMermaid, saveNav } from "./store.js";
 import type {
   AtlasIndex,
   Chunk,
@@ -88,6 +88,7 @@ export async function ingest(options: IngestOptions): Promise<IngestResult> {
   const indexPath = await saveIndex(options.indexDir, index);
   const titles = Object.fromEntries(fiches.map((fiche) => [fiche.id, fiche.title]));
   const navPath = await saveNav(options.indexDir, renderGraphMarkdown(graph, titles));
+  const mermaidPath = await saveMermaid(options.indexDir, renderGraphMermaid(graph, titles));
 
   return {
     ficheCount: fiches.length,
@@ -96,6 +97,7 @@ export async function ingest(options: IngestOptions): Promise<IngestResult> {
     reused,
     indexPath,
     navPath,
+    mermaidPath,
   };
 }
 
