@@ -87,10 +87,13 @@ Packaging, graph UX, and a machine-local performance suite. MVP behavior is unch
 
 ## [0.1.0] — 2026-09-13
 
-Initial public MVP:
+Initial public MVP. GitHub Release notes for tag `v0.1.0` should match these bullets
+([releases](https://github.com/Rentheria/agent-context-atlas/releases/tag/v0.1.0)).
 
-- Markdown fiches + typed document graph (`comes_from` | `leads_to` | `related` | `owns`).
-- Incremental embeddings keyed by `content_hash`.
-- Hybrid query (chunks + graph neighbors) that never invents measured numbers.
-- Synthetic fixtures only (`host-demo-01`, `bot-alpha`, `org-example`, …).
-- MIT license. CLI `atlas ingest` / `atlas query`.
+### Added
+
+- **Markdown fiches** (one file per machine/role/bot) + **typed document graph** with edges `comes_from` | `leads_to` | `related` | `owns`. Readable markdown navigation is a **view** of the graph, not a second source of truth.
+- **Hybrid RAG:** chunk docs + incremental embeddings (re-embed only when `content_hash` changes) + expand graph neighbors on query. Ingest embeddings via OpenAI-compatible `POST /v1/embeddings` (local or cloud). **No API keys in the repo**; environment variables only.
+- **Query CLI** (`atlas ingest` / `atlas query`) and a thin library API that **never invents measured numbers**. If a metric is not in the corpus, the answer is exactly `falta el dato`.
+- Synthetic fixtures only (`host-demo-01`, `bot-alpha`, `role-coordinator`, `bot-beta`, `role-operator`, `org-example`).
+- MIT license.

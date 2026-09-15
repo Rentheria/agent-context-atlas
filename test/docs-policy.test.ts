@@ -25,8 +25,14 @@ describe("docs: bench without invented timings", () => {
     expect(en).toMatch(/```mermaid/);
     expect(es).toMatch(/coverage-Vitest/);
     expect(en).toMatch(/coverage-Vitest/);
-    expect(es).toMatch(/<!-- \[!\[npm\]/);
-    expect(en).toMatch(/<!-- \[!\[npm\]/);
+    expect(es).toMatch(/\[!\[npm\]\(https:\/\/img\.shields\.io\/npm\/v\/agent-context-atlas\.svg\)/);
+    expect(en).toMatch(/\[!\[npm\]\(https:\/\/img\.shields\.io\/npm\/v\/agent-context-atlas\.svg\)/);
+    expect(es).not.toMatch(/<!--\s*\[!\[npm\]/);
+    expect(en).not.toMatch(/<!--\s*\[!\[npm\]/);
+    expect(es).toMatch(/CODE_OF_CONDUCT\.md/);
+    expect(en).toMatch(/CODE_OF_CONDUCT\.md/);
+    expect(es).toMatch(/github\.com\/Rentheria\/agent-context-atlas\/releases/);
+    expect(en).toMatch(/github\.com\/Rentheria\/agent-context-atlas\/releases/);
     expect(es).toMatch(/ROADMAP\.md/);
     expect(en).toMatch(/ROADMAP\.md/);
     expect(es).toMatch(/atlas doctor/);
