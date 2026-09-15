@@ -9,6 +9,7 @@ npm republish after 0.2.2 registry stage conflict (E409: cannot publish over pre
 ### Fixed
 
 - `bin.atlas` is `dist/cli.js` (no `./` prefix) so npm 11 publish keeps the `atlas` CLI instead of dropping it as invalid.
+- `atlas` invoked via an npm bin symlink (the published install path) now runs: entry detection `realpath`s `argv[1]` so `--version` / commands are not a silent no-op.
 
 ### Changed
 

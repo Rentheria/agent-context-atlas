@@ -1,4 +1,5 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { mkdtemp, readFile, rm, symlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -168,6 +169,24 @@ describe("CLI", () => {
       expect(logs).toEqual([pkg.version, pkg.version]);
     } finally {
       console.log = log;
+    }
+  });
+
+  it("runs --version when argv[1] is an npm-style symlink to the CLI", async () => {
+    const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+    const dir = await mkdtemp(path.join(os.tmpdir(), "atlas-bin-"));
+    try {
+      const link = path.join(dir, "atlas");
+      await symlink(path.join(root, "src/cli.ts"), link);
+      const result = spawnSync(process.execPath, ["--import", "tsx", link, "--version"], {
+        encoding: "utf8",
+        cwd: root,
+      });
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(result.stdout.trim()).toBe(readPackageVersion());
+    } finally {
+      await rm(dir, { recursive: true, force: true });
     }
   });
 
