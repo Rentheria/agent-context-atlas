@@ -5,7 +5,7 @@
 [![CI](https://github.com/Rentheria/agent-context-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/Rentheria/agent-context-atlas/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/coverage-Vitest%20v8%20in%20CI-informational)](https://github.com/Rentheria/agent-context-atlas/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-<!-- [![npm](https://img.shields.io/npm/v/agent-context-atlas.svg)](https://www.npmjs.com/package/agent-context-atlas) -->
+[![npm](https://img.shields.io/npm/v/agent-context-atlas.svg)](https://www.npmjs.com/package/agent-context-atlas)
 
 Wiki + grafo tipado + RAG híbrido para **contexto de agentes/máquinas**.  
 No es un tracker de gasto.
@@ -139,6 +139,12 @@ Complementarios de portafolio — **gasto vs contexto**:
 - [cursor-native-agent](https://github.com/Rentheria/cursor-native-agent)
 - [chatarmor](https://github.com/Rentheria/chatarmor)
 - [llm-budget-cap](https://github.com/Rentheria/llm-budget-cap)
+
+## Contribuir
+
+PRs contra **`dev`**. Ver [CONTRIBUTING.md](CONTRIBUTING.md) y el [código de conducta](CODE_OF_CONDUCT.md).
+
+Notas de versión: [CHANGELOG.md](CHANGELOG.md) y [GitHub Releases](https://github.com/Rentheria/agent-context-atlas/releases).
 
 ## Licencia
 

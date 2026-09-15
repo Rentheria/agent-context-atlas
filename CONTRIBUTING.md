@@ -37,3 +37,10 @@ Public scope: [ROADMAP.md](ROADMAP.md). This repo is a **synthetic context wiki/
 ## Edge types
 
 Only: `comes_from` | `leads_to` | `related` | `owns`.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). Report
+conduct issues via [GitHub Issues](https://github.com/Rentheria/agent-context-atlas/issues)
+or the repository owner ([Rentheria](https://github.com/Rentheria)). Security
+reports go to [SECURITY.md](SECURITY.md), not a public issue.

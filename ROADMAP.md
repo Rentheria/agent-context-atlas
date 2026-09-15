@@ -3,7 +3,7 @@
 Public **synthetic** context wiki + typed graph + hybrid RAG toolkit.  
 Not a private operations inventory. Not a personal notes vault.
 
-P0 is shipped or in 0.2.x. Later items stay optional and local — no multi-tenant SaaS, no vault sync, no SQLite plugin in this repo.
+P0 is shipped in 0.2.x (mock CLI in 0.2.2; `agent-context-atlas@0.2.3` is on npm). Later items stay optional and local — no multi-tenant SaaS, no vault sync, no SQLite plugin in this repo.
 
 ## P0 — MVP + portfolio signal
 
@@ -13,9 +13,10 @@ P0 is shipped or in 0.2.x. Later items stay optional and local — no multi-tena
 - Ingest views: `.atlas/NAV.md` + `.atlas/GRAPH.mmd`
 - `atlas query --json`, `atlas doctor`, `atlas graph --format mermaid|dot` (`--out` in 0.2.2)
 - Clear missing-key / missing-local-URL errors (no raw OpenAI 401 as primary UX) — 0.2.2
-- `atlas ingest --mock` / `atlas query --mock` offline demo path — 0.2.2
+- `atlas ingest --mock` / `atlas query --mock` offline demo path — shipped in 0.2.2
 - Mock `npm run bench` and CI smoke `npm run bench -- --ci`
 - Synthetic-only fixtures and generic guardrail tests
+- npm package published: [`agent-context-atlas@0.2.3`](https://www.npmjs.com/package/agent-context-atlas)
 
 ## P1 — small robustness
 
@@ -30,7 +31,7 @@ P0 is shipped or in 0.2.x. Later items stay optional and local — no multi-tena
 
 ## Out of scope
 
-- Publishing to the npm registry (package remains publish-ready)
+- Further npm publishes unless a maintainer asks (`0.2.3` is already on the registry)
 - HTTP chat API / chatarmor integration
 - Private vault sync or any real inventory
 - Portfolio website card
