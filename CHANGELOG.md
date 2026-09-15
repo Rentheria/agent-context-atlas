@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Dates are release tags, not measured timings.
 
+## [0.2.3] — 2026-09-15
+
+npm republish after 0.2.2 registry stage conflict (E409: cannot publish over previously staged 0.2.2). Same code as 0.2.2: mock CLI, clear missing-key errors, `doctor --json`, `graph --out`.
+
+### Fixed
+
+- `bin.atlas` is `dist/cli.js` (no `./` prefix) so npm 11 publish keeps the `atlas` CLI instead of dropping it as invalid.
+
+### Changed
+
+- Package version `0.2.2` → `0.2.3`.
+
 ## [0.2.2] — 2026-09-15
 
 Demo-friendly CLI: clear embeddings errors and an offline `--mock` path. No npm publish; no git tag.
