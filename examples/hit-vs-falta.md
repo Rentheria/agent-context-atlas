@@ -14,9 +14,9 @@ The library is **extractive**. A **hit** quotes a line that is already in a fich
 | `vCPU` on `host-demo-01` | same host table | quotes **2** |
 
 ```bash
-# after ingest (live CLI needs a local/OpenAI-compatible embeddings URL)
-npx atlas query "RAM_GB de host-demo-01"
-npx atlas query --json "max_context_tokens of bot-alpha"
+# after ingest --mock (no API key / no network)
+npx atlas query --mock "RAM_GB de host-demo-01"
+npx atlas query --mock --json "max_context_tokens of bot-alpha"
 ```
 
 ## Misses (exactly `falta el dato`)
@@ -28,10 +28,10 @@ npx atlas query --json "max_context_tokens of bot-alpha"
 | `RAM_GB de bot-alpha` | RAM is on the **host** fiche, not the bot |
 
 ```bash
-npx atlas query "latencia de bot-alpha"
+npx atlas query --mock "latencia de bot-alpha"
 # → falta el dato
 
-npx atlas query --json "RAM_GB de bot-alpha"
+npx atlas query --mock --json "RAM_GB de bot-alpha"
 # { "answer": "falta el dato", "sources": [...], "neighbors": [...] }
 ```
 
@@ -41,7 +41,7 @@ Same assertions live in `npm test` (`test/ingest-query.test.ts`, `test/answer.te
 
 ```bash
 npx atlas doctor --fiches fixtures/fiches --graph fixtures/graph.json
-npx atlas graph --format mermaid --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas graph --format mermaid --out examples/graph.mmd --fiches fixtures/fiches --graph fixtures/graph.json
 npx atlas graph --format dot --fiches fixtures/fiches --graph fixtures/graph.json
 ```
 

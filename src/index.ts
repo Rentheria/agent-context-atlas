@@ -30,9 +30,17 @@ export type { DoctorOptions, DoctorReport } from "./doctor.js";
 export { findGuardrailHits } from "./guardrails.js";
 export type { GuardrailHit } from "./guardrails.js";
 export {
+  assertEmbeddingsReady,
+  createMockEmbeddings,
   createOpenAICompatibleEmbeddings,
+  DEFAULT_EMBEDDINGS_BASE_URL,
   embeddingsConfigFromEnv,
+  embeddingsNeedCloudApiKey,
   embeddingsUrl,
+  isLocalEmbeddingsBaseUrl,
+  MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE,
+  MOCK_EMBEDDINGS_MODEL,
+  mockEmbeddingVector,
 } from "./embeddings.js";
 export type { EmbeddingsClient, EmbeddingsConfig } from "./embeddings.js";
 export { ingest } from "./ingest.js";

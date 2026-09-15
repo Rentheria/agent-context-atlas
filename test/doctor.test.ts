@@ -23,6 +23,39 @@ describe("atlas doctor", () => {
     expect(formatDoctorReport(report)).toMatch(/OK/);
   });
 
+  it("keeps a stable doctor JSON contract", async () => {
+    const report = await doctorCorpus({
+      fichesDir: path.join(fixtures, "fiches"),
+      graphPath: path.join(fixtures, "graph.json"),
+    });
+    expect(Object.keys(report).sort()).toEqual([
+      "danglingEdges",
+      "edgeCount",
+      "ficheCount",
+      "ficheIds",
+      "guardHits",
+      "ok",
+      "orphans",
+    ]);
+    expect(typeof report.ok).toBe("boolean");
+    expect(typeof report.ficheCount).toBe("number");
+    expect(Array.isArray(report.ficheIds)).toBe(true);
+    expect(report.ficheIds.every((id) => typeof id === "string")).toBe(true);
+    expect(typeof report.edgeCount).toBe("number");
+    expect(Array.isArray(report.danglingEdges)).toBe(true);
+    expect(
+      report.danglingEdges.every(
+        (edge) =>
+          typeof edge.from === "string" && typeof edge.to === "string" && typeof edge.type === "string",
+      ),
+    ).toBe(true);
+    expect(Array.isArray(report.orphans)).toBe(true);
+    expect(Array.isArray(report.guardHits)).toBe(true);
+    expect(
+      report.guardHits.every((hit) => typeof hit.kind === "string" && typeof hit.excerpt === "string"),
+    ).toBe(true);
+  });
+
   it("fails when an edge points at a missing fiche and reports orphans", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "atlas-doctor-"));
     try {

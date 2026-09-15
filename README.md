@@ -44,30 +44,35 @@ Requisito: Node ≥ 20.
 git clone https://github.com/Rentheria/agent-context-atlas.git
 cd agent-context-atlas
 npm install
-cp .env.example .env   # rellena URL/modelo/clave en tu máquina
 npm run build
-npx atlas ingest --fiches fixtures/fiches --graph fixtures/graph.json
-npx atlas query "RAM_GB de host-demo-01"
-npx atlas query "latencia de bot-alpha"
-npx atlas query --json "latencia de bot-alpha"
+npx atlas ingest --mock --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas query --mock "RAM_GB de host-demo-01"
+npx atlas query --mock "latencia de bot-alpha"
+npx atlas query --mock --json "latencia de bot-alpha"
 ```
 
-La segunda consulta debe imprimir exactamente `falta el dato` (esa métrica no está en las fichas).
+`--mock` usa embeddings deterministas **sin red** (no hace falta clave). La segunda consulta debe imprimir exactamente `falta el dato` (esa métrica no está en las fichas). Ingest y query deben usar `--mock` juntos.
+
+Embeddings reales (OpenAI-compatible): `cp .env.example .env`, rellena URL/modelo/clave, y omite `--mock`. Si el destino es la nube (OpenAI por defecto) y falta la clave, el CLI falla con un mensaje bilingüe accionable — **nunca** un 401 crudo de OpenAI.
 
 Sin compilar:
 
 ```bash
-npm run atlas -- ingest
-npm run atlas -- query "max_context_tokens of bot-alpha"
+npm run atlas -- ingest --mock
+npm run atlas -- query --mock "max_context_tokens of bot-alpha"
 ```
 
 Índice local: `.atlas/` (gitignored). La ingestión escribe `.atlas/NAV.md` (navegación Markdown + bloque Mermaid) y `.atlas/GRAPH.mmd` (el mismo grafo tipado). Sin embeddings:
 
 ```bash
 npx atlas doctor --fiches fixtures/fiches --graph fixtures/graph.json
+npx atlas doctor --json --fiches fixtures/fiches --graph fixtures/graph.json
 npx atlas graph --format mermaid
+npx atlas graph --format mermaid --out examples/graph.mmd
 npx atlas graph --format dot
 ```
+
+`doctor --json` imprime un objeto estable: `{ ok, ficheCount, ficheIds, edgeCount, danglingEdges, orphans, guardHits }`. `danglingEdges` es `{ from, to, type }[]`; `guardHits` es `{ kind, excerpt }[]`. No rediseña el comando. `--out` escribe mermaid|dot al archivo y **sigue** imprimiendo en stdout.
 
 Vista Mermaid de las aristas tipadas del fixture (ids sintéticos):
 
@@ -86,13 +91,13 @@ Hit vs miss: [examples/hit-vs-falta.md](examples/hit-vs-falta.md). Grafo complet
 | --- | --- |
 | `ATLAS_EMBEDDINGS_BASE_URL` | Base OpenAI-compatible. Default: `https://api.openai.com/v1`. Para un servidor local: `http://localhost:11434/v1`. |
 | `ATLAS_EMBEDDINGS_MODEL` | Modelo de embeddings. Default: `text-embedding-3-small`. |
-| `ATLAS_EMBEDDINGS_API_KEY` | Opcional (muchos servidores locales no la piden). También se lee `OPENAI_API_KEY`. |
+| `ATLAS_EMBEDDINGS_API_KEY` | Requerida para nube (OpenAI u otro host no local). Servidor local: opcional. También se lee `OPENAI_API_KEY`. |
 | `ATLAS_BENCH_MODE` | Solo `npm run bench`: `mock` (default, sin HTTP) o `http` (mismas vars de embeddings). |
 | `ATLAS_BENCH_OUT` | Solo bench: ruta del JSON (default `bench-results.json`, gitignored). |
 
 Nunca commitees `.env`. El cliente hace `POST {baseUrl}/embeddings`.
 
-`npm test` y `npm run bench` (modo `mock` por defecto) **no** llaman a HTTP: no hace falta clave. `ATLAS_BENCH_MODE=http` / `--mode http` usa las mismas variables de embeddings.
+`npm test`, `atlas ingest --mock` / `atlas query --mock`, y `npm run bench` (modo `mock` por defecto) **no** llaman a HTTP: no hace falta clave. `ATLAS_BENCH_MODE=http` / `--mode http` usa las mismas variables de embeddings.
 
 ## Rendimiento
 

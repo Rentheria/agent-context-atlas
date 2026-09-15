@@ -9,8 +9,12 @@ describe("package barrel", () => {
     expect(atlas.doctorCorpus).toEqual(expect.any(Function));
     expect(atlas.formatDoctorReport).toEqual(expect.any(Function));
     expect(atlas.createOpenAICompatibleEmbeddings).toEqual(expect.any(Function));
+    expect(atlas.createMockEmbeddings).toEqual(expect.any(Function));
+    expect(atlas.assertEmbeddingsReady).toEqual(expect.any(Function));
     expect(atlas.embeddingsConfigFromEnv).toEqual(expect.any(Function));
     expect(atlas.embeddingsUrl).toEqual(expect.any(Function));
+    expect(typeof atlas.MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE).toBe("string");
+    expect(atlas.MOCK_EMBEDDINGS_MODEL).toBe("atlas-mock");
     expect(atlas.cosineSimilarity).toEqual(expect.any(Function));
     expect(atlas.answerFromEvidence).toEqual(expect.any(Function));
     expect(atlas.buildGraph).toEqual(expect.any(Function));

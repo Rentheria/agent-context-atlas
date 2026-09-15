@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { FALTA_EL_DATO } from "../src/types.js";
-import { createOpenAICompatibleEmbeddings } from "../src/embeddings.js";
+import { createMockEmbeddings, createOpenAICompatibleEmbeddings } from "../src/embeddings.js";
 import { ingest } from "../src/ingest.js";
 import { query } from "../src/query.js";
 import { fakeEmbeddingsClient, mockEmbeddingsFetch } from "./helpers.js";
@@ -146,6 +146,34 @@ Nueva nota sintética: org-example-revision.
         embeddings,
       });
       expect(wrongEntity.answer).toBe(FALTA_EL_DATO);
+    });
+  });
+
+  it("createMockEmbeddings ingest/query stays extractive (hit + falta el dato)", async () => {
+    await withTempDir(async (dir) => {
+      const embeddings = createMockEmbeddings();
+      await ingest({
+        fichesDir: path.join(fixtures, "fiches"),
+        graphPath: path.join(fixtures, "graph.json"),
+        indexDir: dir,
+        embeddings,
+      });
+
+      const ram = await query({
+        question: "RAM_GB de host-demo-01",
+        indexDir: dir,
+        embeddings,
+      });
+      expect(ram.answer).toMatch(/RAM_GB/);
+      expect(ram.answer).toMatch(/4/);
+      expect(ram.answer).not.toBe(FALTA_EL_DATO);
+
+      const latency = await query({
+        question: "latencia de bot-alpha",
+        indexDir: dir,
+        embeddings,
+      });
+      expect(latency.answer).toBe(FALTA_EL_DATO);
     });
   });
 });

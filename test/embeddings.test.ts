@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertEmbeddingsReady,
+  createMockEmbeddings,
   createOpenAICompatibleEmbeddings,
+  DEFAULT_EMBEDDINGS_BASE_URL,
   EMBEDDINGS_MAX_RETRIES,
   EMBEDDINGS_RETRY_BACKOFF_MS,
   embeddingsConfigFromEnv,
+  embeddingsNeedCloudApiKey,
   embeddingsUrl,
   formatEmbeddingsHttpError,
+  isLocalEmbeddingsBaseUrl,
+  MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE,
+  MOCK_EMBEDDINGS_MODEL,
 } from "../src/embeddings.js";
 import { fakeEmbedding, mockEmbeddingsFetch } from "./helpers.js";
 
@@ -146,5 +153,108 @@ describe("embeddings client", () => {
     expect(formatEmbeddingsHttpError(500, "Internal Server Error", "x")).toBe(
       "Embeddings HTTP 500 Internal Server Error: x",
     );
+  });
+
+  it("treats loopback hosts as local and default OpenAI as cloud", () => {
+    expect(isLocalEmbeddingsBaseUrl("http://localhost:11434/v1")).toBe(true);
+    expect(isLocalEmbeddingsBaseUrl("http://ollama.localhost/v1")).toBe(true);
+    expect(isLocalEmbeddingsBaseUrl(DEFAULT_EMBEDDINGS_BASE_URL)).toBe(false);
+    expect(isLocalEmbeddingsBaseUrl("https://example.test/v1")).toBe(false);
+    expect(isLocalEmbeddingsBaseUrl("not a url")).toBe(false);
+
+    const loopbackOctets = [127, 0, 0, 1].join(".");
+    expect(isLocalEmbeddingsBaseUrl(`http://${loopbackOctets}:9/v1`)).toBe(true);
+    const rfc1918 = [10, 0, 0, 2].join(".");
+    expect(isLocalEmbeddingsBaseUrl(`http://${rfc1918}:11434/v1`)).toBe(true);
+
+    expect(
+      embeddingsNeedCloudApiKey({
+        baseUrl: DEFAULT_EMBEDDINGS_BASE_URL,
+        model: "text-embedding-3-small",
+      }),
+    ).toBe(true);
+    expect(
+      embeddingsNeedCloudApiKey({
+        baseUrl: DEFAULT_EMBEDDINGS_BASE_URL,
+        model: "text-embedding-3-small",
+        apiKey: "sk-test",
+      }),
+    ).toBe(false);
+    expect(
+      embeddingsNeedCloudApiKey({
+        baseUrl: "http://localhost:11434/v1",
+        model: "nomic-embed-text",
+      }),
+    ).toBe(false);
+  });
+
+  it("fails with a bilingual missing-key message before any cloud HTTP", () => {
+    expect(() =>
+      assertEmbeddingsReady({
+        baseUrl: DEFAULT_EMBEDDINGS_BASE_URL,
+        model: "text-embedding-3-small",
+      }),
+    ).toThrow(MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE);
+
+    expect(() =>
+      createOpenAICompatibleEmbeddings({
+        baseUrl: DEFAULT_EMBEDDINGS_BASE_URL,
+        model: "text-embedding-3-small",
+        fetchImpl: (async () => {
+          throw new Error("must not call fetch when the cloud key is missing");
+        }) as typeof fetch,
+      }),
+    ).toThrow(MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE);
+
+    expect(() =>
+      createOpenAICompatibleEmbeddings({
+        baseUrl: "https://example.test/v1",
+        model: "demo-embed",
+      }),
+    ).toThrow(/ATLAS_EMBEDDINGS_API_KEY/);
+    expect(() =>
+      createOpenAICompatibleEmbeddings({
+        baseUrl: "https://example.test/v1",
+        model: "demo-embed",
+      }),
+    ).toThrow(/ATLAS_EMBEDDINGS_BASE_URL/);
+    expect(() =>
+      createOpenAICompatibleEmbeddings({
+        baseUrl: "https://example.test/v1",
+        model: "demo-embed",
+      }),
+    ).toThrow(/servidor local/);
+    expect(MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE).not.toMatch(/Embeddings HTTP 401/);
+    expect(MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE).not.toMatch(/Incorrect API key/i);
+  });
+
+  it("rewrites HTTP 401 to the missing-key message (never a raw OpenAI 401)", async () => {
+    const client = createOpenAICompatibleEmbeddings({
+      baseUrl: "http://localhost:11434/v1",
+      model: "nomic-embed-text",
+      apiKey: "bad-key",
+      sleep: async () => {
+        throw new Error("401 must not retry");
+      },
+      fetchImpl: (async () => {
+        return new Response("Incorrect API key provided: sk-***", {
+          status: 401,
+          statusText: "Unauthorized",
+        });
+      }) as typeof fetch,
+    });
+
+    await expect(client.embed(["hello"])).rejects.toThrow(MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE);
+    await expect(client.embed(["hello"])).rejects.not.toThrow(/Embeddings HTTP 401/);
+    await expect(client.embed(["hello"])).rejects.not.toThrow(/Incorrect API key/);
+  });
+
+  it("createMockEmbeddings is deterministic and never fetches", async () => {
+    const client = createMockEmbeddings();
+    expect(client.model).toBe(MOCK_EMBEDDINGS_MODEL);
+    const [a] = await client.embed(["RAM_GB de host-demo-01"]);
+    const [b] = await client.embed(["RAM_GB de host-demo-01"]);
+    expect(a).toEqual(b);
+    expect(a?.length).toBeGreaterThan(0);
   });
 });

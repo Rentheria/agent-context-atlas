@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { doctorCorpus, formatDoctorReport } from "./doctor.js";
 import type { EmbeddingsClient } from "./embeddings.js";
-import { createOpenAICompatibleEmbeddings, embeddingsConfigFromEnv } from "./embeddings.js";
+import {
+  createMockEmbeddings,
+  createOpenAICompatibleEmbeddings,
+  embeddingsConfigFromEnv,
+} from "./embeddings.js";
 import { loadFiches } from "./fiche.js";
 import { buildGraph, loadGraphFile, renderGraphDot, renderGraphMermaid } from "./graph.js";
 import { ingest } from "./ingest.js";
@@ -61,6 +65,7 @@ async function runIngest(argv: string[], deps: CliDeps): Promise<number> {
       fiches: { type: "string" },
       graph: { type: "string" },
       index: { type: "string" },
+      mock: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -69,7 +74,7 @@ async function runIngest(argv: string[], deps: CliDeps): Promise<number> {
     return 0;
   }
 
-  const embeddings = clientFromEnv(deps);
+  const embeddings = clientFromEnv(deps, values.mock);
   const result = await ingest({
     fichesDir: values.fiches ?? "fixtures/fiches",
     graphPath: values.graph ?? "fixtures/graph.json",
@@ -93,6 +98,7 @@ async function runQuery(argv: string[], deps: CliDeps): Promise<number> {
     options: {
       index: { type: "string" },
       json: { type: "boolean" },
+      mock: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -103,11 +109,11 @@ async function runQuery(argv: string[], deps: CliDeps): Promise<number> {
 
   const question = positionals.join(" ").trim();
   if (!question) {
-    console.error('Uso: atlas query "..."');
+    console.error('Uso: atlas query [--mock] "..."');
     return 1;
   }
 
-  const embeddings = clientFromEnv(deps);
+  const embeddings = clientFromEnv(deps, values.mock);
   const result = await query({
     question,
     indexDir: values.index ?? ".atlas",
@@ -167,6 +173,7 @@ async function runGraph(argv: string[]): Promise<number> {
       fiches: { type: "string" },
       graph: { type: "string" },
       format: { type: "string" },
+      out: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -177,7 +184,7 @@ async function runGraph(argv: string[]): Promise<number> {
 
   const format = values.format ?? "mermaid";
   if (format !== "mermaid" && format !== "dot") {
-    console.error("Uso: atlas graph --format mermaid|dot");
+    console.error("Uso: atlas graph --format mermaid|dot [--out archivo]");
     return 1;
   }
 
@@ -188,7 +195,13 @@ async function runGraph(argv: string[]): Promise<number> {
   const graph = buildGraph(fiches, extra);
   const titles = Object.fromEntries(fiches.map((fiche) => [fiche.id, fiche.title]));
   const rendered = format === "dot" ? renderGraphDot(graph, titles) : renderGraphMermaid(graph, titles);
-  console.log(rendered.trimEnd());
+  const text = `${rendered.trimEnd()}\n`;
+  if (values.out) {
+    const outPath = path.resolve(values.out);
+    mkdirSync(path.dirname(outPath), { recursive: true });
+    writeFileSync(outPath, text, "utf8");
+  }
+  console.log(text.trimEnd());
   return 0;
 }
 
@@ -196,7 +209,8 @@ export function formatQueryJson(result: QueryResult): string {
   return `${JSON.stringify(result, null, 2)}\n`.trimEnd();
 }
 
-function clientFromEnv(deps: CliDeps): EmbeddingsClient {
+function clientFromEnv(deps: CliDeps, mock?: boolean): EmbeddingsClient {
+  if (mock) return createMockEmbeddings();
   if (deps.embeddings) return deps.embeddings;
   const config = embeddingsConfigFromEnv();
   return createOpenAICompatibleEmbeddings(config);
@@ -207,15 +221,20 @@ function printHelp(): void {
 
 Uso:
   atlas --version | -v
-  atlas ingest [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--index .atlas]
-  atlas query "..." [--index .atlas] [--json]
+  atlas ingest [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--index .atlas] [--mock]
+  atlas query "..." [--index .atlas] [--json] [--mock]
   atlas doctor [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--json]
-  atlas graph [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--format mermaid|dot]
+  atlas graph [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--format mermaid|dot] [--out archivo]
+
+  --mock   embeddings deterministas, sin red (demo / CI). ingest y query deben usar el mismo flag.
+  --out    escribe mermaid|dot a un archivo; stdout se mantiene.
 
 Variables de entorno:
   ATLAS_EMBEDDINGS_BASE_URL   endpoint OpenAI-compatible (default https://api.openai.com/v1)
   ATLAS_EMBEDDINGS_MODEL      modelo de embeddings (default text-embedding-3-small)
-  ATLAS_EMBEDDINGS_API_KEY    opcional; también acepta OPENAI_API_KEY
+  ATLAS_EMBEDDINGS_API_KEY    requerida para nube (OpenAI u otro host no local);
+                              también acepta OPENAI_API_KEY. Servidor local: no hace falta clave.
+                              Sin clave en nube: error claro (nunca un 401 crudo de OpenAI).
 
 Regla: si una métrica no está en el corpus, la respuesta es exactamente: falta el dato
 Solo fixtures sintéticos (host-demo-01, bot-alpha, role-coordinator, org-example, …).`);
