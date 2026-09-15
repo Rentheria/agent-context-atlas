@@ -17,6 +17,14 @@ Report privately instead of opening a public issue:
 
 Include what you found, how to reproduce it, and its potential impact.
 
+## Development tooling advisories
+
+`vitest` and `@vitest/coverage-v8` 3.2.x (**devDependencies**) still report [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) (`@vitest/mocker` redirect-mock path traversal). There is **no 3.x patch**; the fix is Vitest 4.1.11 / 5.0.x (a major bump). This repo stays on Vitest 3.x for Node 20 CI.
+
+These are **devDependency** coverage/test-tooling vulns, accepted until an upstream 3.x backport or a planned major upgrade. We do **not** add `npm audit` ignore flags that hide all advisories.
+
+CI runs `vitest run` (no Vitest UI / Browser Mode, no network-exposed API). Runtime `dependencies` currently audit clean.
+
 ---
 
 # Política de seguridad
@@ -37,3 +45,11 @@ Repórtala en privado, no en un issue público:
 - O el [reporte privado de GitHub](https://github.com/Rentheria/agent-context-atlas/security/advisories/new)
 
 Incluye qué encontraste, cómo reproducirlo y el impacto potencial.
+
+## Avisos de herramientas de desarrollo
+
+`vitest` y `@vitest/coverage-v8` 3.2.x (**devDependencies**) siguen reportando [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) (path traversal en redirect mock de `@vitest/mocker`). **No hay parche 3.x**; el arreglo es Vitest 4.1.11 / 5.0.x (salto de major). Este repo se queda en Vitest 3.x por CI en Node 20.
+
+Son vulnerabilidades de **devDependency** (cobertura/test), aceptadas hasta un backport 3.x o un upgrade de major planificado. **No** añadimos flags de `npm audit` que oculten todos los avisos.
+
+CI ejecuta `vitest run` (sin UI / Browser Mode de Vitest, sin API expuesta a la red). Las `dependencies` de runtime auditan limpias ahora.

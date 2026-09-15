@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { parseArgs } from "node:util";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { doctorCorpus, formatDoctorReport } from "./doctor.js";
 import type { EmbeddingsClient } from "./embeddings.js";
 import { createOpenAICompatibleEmbeddings, embeddingsConfigFromEnv } from "./embeddings.js";
@@ -14,8 +16,21 @@ export interface CliDeps {
   embeddings?: EmbeddingsClient;
 }
 
+export function readPackageVersion(): string {
+  const pkgPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version?: unknown };
+  if (typeof pkg.version !== "string" || pkg.version.length === 0) {
+    throw new Error("package.json is missing a version string");
+  }
+  return pkg.version;
+}
+
 export async function run(argv: string[], deps: CliDeps = {}): Promise<number> {
   const command = argv[0];
+  if (command === "--version" || command === "-v") {
+    console.log(readPackageVersion());
+    return 0;
+  }
   if (!command || command === "-h" || command === "--help" || command === "help") {
     printHelp();
     return command ? 0 : 1;
@@ -191,6 +206,7 @@ function printHelp(): void {
   console.log(`agent-context-atlas — contexto de agentes/máquinas (no gasto)
 
 Uso:
+  atlas --version | -v
   atlas ingest [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--index .atlas]
   atlas query "..." [--index .atlas] [--json]
   atlas doctor [--fiches fixtures/fiches] [--graph fixtures/graph.json] [--json]

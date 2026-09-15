@@ -1,9 +1,9 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { formatQueryJson, run } from "../src/cli.js";
+import { formatQueryJson, readPackageVersion, run } from "../src/cli.js";
 import { FALTA_EL_DATO, type QueryResult } from "../src/types.js";
 import { fakeEmbeddingsClient } from "./helpers.js";
 
@@ -27,6 +27,7 @@ describe("CLI", () => {
       expect(logs.join("\n")).toMatch(/atlas ingest/);
       expect(logs.join("\n")).toMatch(/atlas doctor/);
       expect(logs.join("\n")).toMatch(/atlas graph/);
+      expect(logs.join("\n")).toMatch(/--version/);
       expect(logs.join("\n")).toMatch(/--json/);
       expect(logs.join("\n")).toMatch(/falta el dato/);
 
@@ -118,6 +119,26 @@ describe("CLI", () => {
 
       const bad = await run(["graph", "--format", "png"]);
       expect(bad).toBe(1);
+    } finally {
+      console.log = log;
+    }
+  });
+
+  it("prints package.json version for --version and -v", async () => {
+    const pkg = JSON.parse(await readFile(path.join(path.dirname(fileURLToPath(import.meta.url)), "../package.json"), "utf8")) as {
+      version: string;
+    };
+    expect(readPackageVersion()).toBe(pkg.version);
+
+    const logs: string[] = [];
+    const log = console.log;
+    console.log = (message?: unknown) => {
+      logs.push(String(message ?? ""));
+    };
+    try {
+      expect(await run(["--version"])).toBe(0);
+      expect(await run(["-v"])).toBe(0);
+      expect(logs).toEqual([pkg.version, pkg.version]);
     } finally {
       console.log = log;
     }

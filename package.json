@@ -1,6 +1,6 @@
 {
   "name": "agent-context-atlas",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Wiki + typed doc graph + hybrid RAG for agent/machine context. Never invents measured numbers (falta el dato). Synthetic fixtures only.",
   "type": "module",
   "engines": {
@@ -62,9 +62,9 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.1",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^3.2.7",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }
