@@ -67,7 +67,65 @@ export function renderGraphMarkdown(graph: DocGraph, titles: Record<string, stri
     lines.push("");
   }
 
+  const mermaid = renderGraphMermaid(graph, titles).trimEnd();
+  lines.push(
+    "## Grafo (Mermaid)",
+    "",
+    "Vista del grafo tipado; no es una segunda fuente de verdad.",
+    "",
+    "```mermaid",
+    mermaid,
+    "```",
+    "",
+  );
+
   return lines.join("\n");
+}
+
+/** Standalone Mermaid flowchart of typed edges (also written to `.atlas/GRAPH.mmd`). */
+export function renderGraphMermaid(graph: DocGraph, titles: Record<string, string> = {}): string {
+  const lines = ["flowchart LR"];
+
+  for (const id of graph.nodes) {
+    const title = titles[id];
+    const label = title && title !== id ? `${id} — ${title}` : id;
+    lines.push(`  ${mermaidNodeId(id)}["${escapeMermaidLabel(label)}"]`);
+  }
+
+  for (const edge of graph.edges) {
+    lines.push(`  ${mermaidNodeId(edge.from)} -->|${edge.type}| ${mermaidNodeId(edge.to)}`);
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
+/** Mermaid node ids must be alphanumeric/underscore and start with a letter. */
+export function mermaidNodeId(id: string): string {
+  const safe = id.replace(/[^A-Za-z0-9_]/g, "_");
+  return /^[A-Za-z]/.test(safe) ? safe : `n_${safe}`;
+}
+
+function escapeMermaidLabel(text: string): string {
+  return text.replace(/["[\]|]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Graphviz DOT view of the same typed edges (stdout via `atlas graph --format dot`). */
+export function renderGraphDot(graph: DocGraph, titles: Record<string, string> = {}): string {
+  const lines = ["digraph atlas {", "  rankdir=LR;"];
+  for (const id of graph.nodes) {
+    const title = titles[id];
+    const label = title && title !== id ? `${id} — ${title}` : id;
+    lines.push(`  ${dotQuote(id)} [label=${dotQuote(label)}];`);
+  }
+  for (const edge of graph.edges) {
+    lines.push(`  ${dotQuote(edge.from)} -> ${dotQuote(edge.to)} [label=${dotQuote(edge.type)}];`);
+  }
+  lines.push("}", "");
+  return lines.join("\n");
+}
+
+function dotQuote(text: string): string {
+  return JSON.stringify(text);
 }
 
 function extractEdges(parsed: unknown): unknown[] {

@@ -16,7 +16,19 @@ export type {
 export { contentHash } from "./hash.js";
 export { chunkMarkdown } from "./chunker.js";
 export { loadFiches, parseFiche } from "./fiche.js";
-export { buildGraph, expandNeighbors, loadGraphFile, renderGraphMarkdown } from "./graph.js";
+export {
+  buildGraph,
+  expandNeighbors,
+  loadGraphFile,
+  mermaidNodeId,
+  renderGraphDot,
+  renderGraphMarkdown,
+  renderGraphMermaid,
+} from "./graph.js";
+export { doctorCorpus, formatDoctorReport } from "./doctor.js";
+export type { DoctorOptions, DoctorReport } from "./doctor.js";
+export { findGuardrailHits } from "./guardrails.js";
+export type { GuardrailHit } from "./guardrails.js";
 export {
   createOpenAICompatibleEmbeddings,
   embeddingsConfigFromEnv,
