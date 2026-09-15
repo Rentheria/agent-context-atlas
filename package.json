@@ -1,6 +1,6 @@
 {
   "name": "agent-context-atlas",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Wiki + typed doc graph + hybrid RAG for agent/machine context. Never invents measured numbers (falta el dato). Synthetic fixtures only.",
   "type": "module",
   "engines": {

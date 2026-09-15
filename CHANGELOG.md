@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here. Dates are release tags, not measured timings.
 
+## [0.2.2] — 2026-09-15
+
+Demo-friendly CLI: clear embeddings errors and an offline `--mock` path. No npm publish; no git tag.
+
+### Added
+
+- `atlas ingest --mock` and `atlas query --mock "..."` — deterministic bag-of-words embeddings, no network. Extractive answers and exactly `falta el dato` still apply. Ingest and query must both use `--mock` (model id `atlas-mock`).
+- Library helpers: `createMockEmbeddings`, `mockEmbeddingVector`, `assertEmbeddingsReady`, `isLocalEmbeddingsBaseUrl`, `MISSING_EMBEDDINGS_CREDENTIALS_MESSAGE`.
+- `atlas graph --out <file>` writes mermaid or DOT while still printing to stdout.
+- Documented `atlas doctor --json` object shape (`ok`, `ficheCount`, `ficheIds`, `edgeCount`, `danglingEdges`, `orphans`, `guardHits`) with a stable schema assertion in tests.
+
+### Fixed
+
+- Cloud embeddings (default OpenAI or any non-local `ATLAS_EMBEDDINGS_BASE_URL`) without `ATLAS_EMBEDDINGS_API_KEY` / `OPENAI_API_KEY` fail **before** HTTP with a bilingual, actionable message. HTTP **401** is rewritten to the same message — never a raw OpenAI 401 as the primary UX. Local servers (loopback / RFC1918) still work without a key.
+
+### Changed
+
+- Package version `0.2.1` → `0.2.2`.
+
 ## [0.2.1] — 2026-09-15
 
 JR review leftovers (P1 + cheap P2). MVP answers are unchanged. No npm publish; 0.2.0 release/tag is created outside this change.

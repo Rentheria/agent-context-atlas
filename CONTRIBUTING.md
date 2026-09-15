@@ -19,7 +19,7 @@ npm run bench      # mock embeddings; no API key
 npm run bench:ci   # fast smoke (same checks as CI)
 ```
 
-Node ≥ 20. Embeddings HTTP is mocked in tests and in `npm run bench` (default `--mode mock`) — no API key required.
+Node ≥ 20. Embeddings HTTP is mocked in tests, `atlas ingest --mock` / `atlas query --mock`, and `npm run bench` (default `--mode mock`) — no API key required. Cloud ingest without a key fails with a bilingual message (never a raw OpenAI 401).
 
 Public scope: [ROADMAP.md](ROADMAP.md). This repo is a **synthetic context wiki/RAG toolkit**, not a private ops inventory and not a personal notes vault.
 
