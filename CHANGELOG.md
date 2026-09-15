@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here. Dates are release tags, not measured timings.
 
+## [0.2.1] — 2026-09-15
+
+JR review leftovers (P1 + cheap P2). MVP answers are unchanged. No npm publish; 0.2.0 release/tag is created outside this change.
+
+### Added
+
+- Barrel smoke test: imports the public `src/index.ts` surface and asserts `ingest`, `query`, `FALTA_EL_DATO`, `doctorCorpus`, embeddings helpers, and other library exports exist.
+- Bounded embeddings HTTP retry on **429** and **5xx**: 1 initial attempt + up to 2 retries (3 calls max), 50ms then 150ms backoff. Other 4xx are not retried.
+- `atlas --version` / `-v` prints the `package.json` version and exits 0.
+
+### Fixed
+
+- Embeddings HTTP error text no longer inserts a double space when `statusText` is empty.
+
+### Security
+
+- `vitest` / `@vitest/coverage-v8` stay on the latest 3.2.x (`^3.2.7`). Remaining moderate [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) (`@vitest/mocker`) has **no 3.x patch** (fixed in 4.1.11 / 5.0.x). Documented as accepted **devDependency** coverage-tooling risk in `SECURITY.md`. No `npm audit` ignore-all.
+
+### Changed
+
+- Package version `0.2.0` → `0.2.1`.
+
 ## [0.2.0] — 2026-09-15
 
 Packaging, graph UX, and a machine-local performance suite. MVP behavior is unchanged: extractive answers, exactly `falta el dato` when a metric is missing, OpenAI-compatible embeddings via env, synthetic fixtures only.

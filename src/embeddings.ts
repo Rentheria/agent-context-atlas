@@ -12,10 +12,21 @@ export interface EmbeddingsClient {
 export interface EmbeddingsClientOptions extends EmbeddingsConfig {
   fetchImpl?: typeof fetch;
   batchSize?: number;
+  /** Test hook for retry backoff. Defaults to `setTimeout`. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 const DEFAULT_MODEL = "text-embedding-3-small";
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
+
+/**
+ * Extra HTTP attempts after the first failed request.
+ * Total calls = 1 initial + up to {@link EMBEDDINGS_MAX_RETRIES} retries.
+ * Only HTTP 429 and 5xx are retried; other 4xx are not.
+ */
+export const EMBEDDINGS_MAX_RETRIES = 2;
+/** Short backoff before each retry (first retry 50ms, second 150ms). */
+export const EMBEDDINGS_RETRY_BACKOFF_MS = [50, 150] as const;
 
 export function embeddingsConfigFromEnv(
   env: NodeJS.ProcessEnv = process.env,
@@ -29,12 +40,16 @@ export function embeddingsConfigFromEnv(
 /**
  * OpenAI-compatible client: POST {baseUrl}/embeddings
  * (baseUrl should already include /v1, or /v1 is appended).
+ *
+ * Transient HTTP failures (429, 5xx) use 1 initial attempt + up to 2 retries
+ * (3 HTTP calls max). Backoff is 50ms then 150ms. Other 4xx are not retried.
  */
 export function createOpenAICompatibleEmbeddings(
   options: EmbeddingsClientOptions,
 ): EmbeddingsClient {
   const fetchImpl = options.fetchImpl ?? fetch;
   const batchSize = options.batchSize ?? 64;
+  const sleep = options.sleep ?? defaultSleep;
   const url = embeddingsUrl(options.baseUrl);
 
   return {
@@ -44,7 +59,14 @@ export function createOpenAICompatibleEmbeddings(
       const vectors: number[][] = [];
       for (let i = 0; i < texts.length; i += batchSize) {
         const batch = texts.slice(i, i + batchSize);
-        const embeddings = await embedBatch(fetchImpl, url, options.model, options.apiKey, batch);
+        const embeddings = await embedBatch(
+          fetchImpl,
+          url,
+          options.model,
+          options.apiKey,
+          batch,
+          sleep,
+        );
         vectors.push(...embeddings);
       }
       return vectors;
@@ -59,31 +81,64 @@ export function embeddingsUrl(baseUrl: string): string {
   return `${trimmed}/v1/embeddings`;
 }
 
+function isRetryableEmbeddingsStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+export function formatEmbeddingsHttpError(
+  status: number,
+  statusText: string,
+  detail: string,
+): string {
+  const statusLabel = [String(status), statusText.trim()].filter(Boolean).join(" ");
+  return `Embeddings HTTP ${statusLabel}: ${detail}`;
+}
+
 async function embedBatch(
   fetchImpl: typeof fetch,
   url: string,
   model: string,
   apiKey: string | undefined,
   input: string[],
+  sleep: (ms: number) => Promise<void>,
 ): Promise<number[][]> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
-  const response = await fetchImpl(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ model, input }),
-  });
+  const maxAttempts = 1 + EMBEDDINGS_MAX_RETRIES;
+  let lastError: Error | undefined;
 
-  if (!response.ok) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const response = await fetchImpl(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ model, input }),
+    });
+
+    if (response.ok) {
+      const payload: unknown = await response.json();
+      return parseEmbeddingsResponse(payload, input.length);
+    }
+
     const detail = await safeText(response);
-    throw new Error(`Embeddings HTTP ${response.status} ${response.statusText}: ${detail}`);
+    lastError = new Error(formatEmbeddingsHttpError(response.status, response.statusText, detail));
+    const canRetry = isRetryableEmbeddingsStatus(response.status) && attempt < maxAttempts;
+    if (!canRetry) {
+      throw lastError;
+    }
+    const backoff = EMBEDDINGS_RETRY_BACKOFF_MS[attempt - 1] ?? EMBEDDINGS_RETRY_BACKOFF_MS.at(-1) ?? 50;
+    await sleep(backoff);
   }
 
-  const payload: unknown = await response.json();
-  return parseEmbeddingsResponse(payload, input.length);
+  throw lastError ?? new Error("Embeddings request failed");
+}
+
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function parseEmbeddingsResponse(payload: unknown, expected: number): number[][] {
